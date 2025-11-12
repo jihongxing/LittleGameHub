@@ -35,8 +35,29 @@ app.use(helmet({
 }))
 
 // CORS配置
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173', // Vite 默认端口
+  process.env.FRONTEND_URL
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // 允许没有 origin 的请求（如 Postman、curl 等）
+    if (!origin) return callback(null, true)
+    
+    // 检查是否在允许列表中
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      // 开发环境允许所有本地源
+      if (process.env.NODE_ENV === 'development' && origin.startsWith('http://localhost')) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -74,7 +95,7 @@ app.use(notFoundHandler)
 app.use(errorHandler)
 
 // 获取端口
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 8000
 
 // 启动服务器
 const startServer = async () => {

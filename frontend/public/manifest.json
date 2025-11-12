@@ -1,0 +1,13 @@
+{
+  "name": "LittleGameHub",
+  "short_name": "GameHub",
+  "description": "一个现代化的小游戏聚合平台",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1890ff",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [],
+  "categories": ["games", "entertainment"]
+}
+

@@ -5,6 +5,7 @@ import userRoutes from './users'
 import downloadRoutes from './downloads'
 import favoriteRoutes from './favorites'
 import { requestLogger } from '@/middleware'
+import { getRecommendations } from '@/controllers/gameController'
 
 const router = Router()
 
@@ -17,6 +18,9 @@ router.use('/games', gameRoutes)
 router.use('/users', userRoutes)
 router.use('/downloads', downloadRoutes)
 router.use('/favorites', favoriteRoutes)
+
+// 推荐接口（临时：返回热门游戏）
+router.get('/recommendations', getRecommendations)
 
 // API健康检查
 router.get('/health', (req, res) => {

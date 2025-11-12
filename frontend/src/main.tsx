@@ -38,7 +38,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider locale={zhCN} theme={theme}>
-          <BrowserRouter>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <App />
           </BrowserRouter>
         </ConfigProvider>

@@ -18,6 +18,8 @@ import AchievementsPage from '@/pages/Profile/AchievementsPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import DownloadsPage from '@/pages/DownloadsPage'
 import ProfilePage from '@/pages/ProfilePage'
+import LoginPage from '@/pages/Auth/LoginPage'
+import RegisterPage from '@/pages/Auth/RegisterPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import OfflineModeBanner from '@/components/OfflineModeBanner'
 
@@ -41,10 +43,19 @@ const App: React.FC = () => {
         <Content className="flex-1">
           <ErrorBoundary>
           <Routes>
+            {/* 首页 */}
             <Route path="/" element={<HomePage />} />
+            
+            {/* 认证相关 */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            
+            {/* 游戏相关 */}
             <Route path="/games" element={<GameList />} />
             <Route path="/games/:id" element={<GameDetail />} />
             <Route path="/games/:id/play" element={<GamePlayer />} />
+            
+            {/* 用户相关 */}
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
             <Route path="/offline" element={<OfflineGamesPage />} />
@@ -53,6 +64,8 @@ const App: React.FC = () => {
             <Route path="/social" element={<SocialPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            
+            {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </ErrorBoundary>

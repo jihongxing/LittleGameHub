@@ -26,9 +26,18 @@ export const getGames = catchAsync(async (req: Request, res: Response, next: Nex
   // 执行查询
   const result = await gameRepository.findGamesWithFilters(filters, pagination)
 
+  // 格式化响应以匹配前端期望的格式
   res.status(200).json({
     status: 'success',
-    data: result
+    data: {
+      games: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        total_pages: result.totalPages
+      }
+    }
   })
 })
 
@@ -350,5 +359,35 @@ export const searchGames = catchAsync(async (req: Request, res: Response, next: 
   res.status(200).json({
     status: 'success',
     data: result
+  })
+})
+
+/**
+ * 获取推荐游戏（临时实现：返回热门游戏）
+ */
+export const getRecommendations = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 6
+  const gameRepository = getGameRepositoryInstance()
+
+  // 获取热门游戏作为推荐
+  const result = await gameRepository.findGamesWithFilters(
+    {
+      availabilityStatus: GameAvailabilityStatus.ACTIVE,
+      isFeatured: true
+    },
+    {
+      page: 1,
+      limit: limit,
+      sortBy: 'play_count',
+      sortOrder: 'DESC'
+    }
+  )
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      games: result.data,
+      total: result.total
+    }
   })
 })
