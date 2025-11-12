@@ -122,3 +122,21 @@ export const getFileInfo = (filePath: string) => {
     return null
   }
 }
+
+/**
+ * Upload Game Cover Image
+ * 上传游戏封面图片
+ */
+export const uploadGameCover = upload
+
+/**
+ * Upload Game Screenshots
+ * 上传游戏截图
+ */
+export const uploadGameScreenshots = upload
+
+/**
+ * Upload User Avatar
+ * 上传用户头像
+ */
+export const uploadUserAvatar = upload

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyToken, extractTokenFromHeader } from '@/utils/jwt'
-import { User } from '@/models'
+import { User } from '../modules/users/entities/user.entity'
+import { getUserRepository } from '../services/repository.service'
 import { AppError } from './errorHandler'
 
 /**
@@ -34,8 +35,9 @@ export const authenticate = async (
     const decoded = verifyToken(token)
     
     // 查找用户
-    const user = await User.findByPk(decoded.id, {
-      attributes: { exclude: ['password'] }
+    const userRepository = getUserRepository()
+    const user = await userRepository.findOne({ 
+      where: { id: decoded.id }
     })
     
     if (!user) {
@@ -43,7 +45,7 @@ export const authenticate = async (
     }
 
     // 检查用户是否激活
-    if (!user.isActive) {
+    if (!user.is_active) {
       return next(new AppError('账户已被禁用', 401))
     }
 
@@ -75,11 +77,12 @@ export const optionalAuthenticate = async (
     const decoded = verifyToken(token)
     
     // 查找用户
-    const user = await User.findByPk(decoded.id, {
-      attributes: { exclude: ['password'] }
+    const userRepository = getUserRepository()
+    const user = await userRepository.findOne({ 
+      where: { id: decoded.id }
     })
     
-    if (user && user.isActive) {
+    if (user && user.is_active) {
       // 将用户信息添加到请求对象
       req.user = user
     }
@@ -125,7 +128,7 @@ export const requireEmailVerification = (
     return next(new AppError('请先登录', 401))
   }
 
-  if (!req.user.isEmailVerified) {
+  if (!req.user.is_email_verified) {
     return next(new AppError('请先验证邮箱', 401))
   }
 

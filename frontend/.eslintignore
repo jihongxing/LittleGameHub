@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Config files
+*.config.js
+*.config.ts
+vite.config.ts
+vitest.config.*
+.eslintrc.*
+.prettierrc.*
+
+# Generated files
+*.d.ts
+*.tsbuildinfo
+
+# Minified files
+*.min.js
+*.min.css
+
+# Public assets
+public/
+
+# Test files (if you want to ignore them)
+# tests/
+# *.test.ts
+# *.test.tsx
+# *.spec.ts
+# *.spec.tsx
+

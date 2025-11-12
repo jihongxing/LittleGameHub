@@ -3,7 +3,7 @@ export { authenticate, optionalAuthenticate, authorize, requireAdmin, requireEma
 export { errorHandler, catchAsync, AppError } from './errorHandler'
 export { notFoundHandler } from './notFoundHandler'
 export { requestLogger } from './requestLogger'
-export {
+import {
   generalLimiter,
   strictLimiter,
   loginLimiter,
@@ -12,3 +12,24 @@ export {
   emailVerificationLimiter,
   downloadLimiter
 } from './rateLimiter'
+
+export {
+  generalLimiter,
+  strictLimiter,
+  loginLimiter,
+  registerLimiter,
+  passwordResetLimiter,
+  emailVerificationLimiter,
+  downloadLimiter
+}
+
+// 导出rateLimiter对象，包含所有限流器
+export const rateLimiter = {
+  generalLimiter,
+  strictLimiter,
+  loginLimiter,
+  registerLimiter,
+  passwordResetLimiter,
+  emailVerificationLimiter,
+  downloadLimiter
+}

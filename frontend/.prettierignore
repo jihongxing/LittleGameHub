@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.d.ts
+*.tsbuildinfo
+
+# Minified files
+*.min.js
+*.min.css
+
+# Config files
+*.config.js
+*.config.ts
+vite.config.ts
+
+# Public assets
+public/
+
+# Misc
+.npm/
+.eslintcache
+.prettiercache
+

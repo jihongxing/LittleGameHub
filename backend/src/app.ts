@@ -6,7 +6,8 @@ import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import path from 'path'
-import { sequelize } from '@/models'
+import { AppDataSource } from '@/config/database.config'
+import { repositoryService } from '@/services/repository.service'
 import { errorHandler, notFoundHandler } from '@/middleware'
 import routes from '@/routes'
 import { logger } from '@/utils'
@@ -78,15 +79,15 @@ const PORT = process.env.PORT || 5000
 // 启动服务器
 const startServer = async () => {
   try {
-    // 测试数据库连接
-    await sequelize.authenticate()
-    logger.info('数据库连接成功')
-
-    // 同步数据库模型
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true })
-      logger.info('数据库模型同步完成')
+    // 初始化TypeORM数据源
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize()
+      logger.info('TypeORM数据库连接成功')
     }
+
+    // 初始化仓库服务
+    await repositoryService.initialize()
+    logger.info('仓库服务初始化完成')
 
     // 启动服务器
     const server = app.listen(PORT, () => {
@@ -102,8 +103,10 @@ const startServer = async () => {
         logger.info('HTTP服务器已关闭')
         
         try {
-          await sequelize.close()
-          logger.info('数据库连接已关闭')
+          if (AppDataSource.isInitialized) {
+            await AppDataSource.destroy()
+            logger.info('TypeORM数据库连接已关闭')
+          }
           process.exit(0)
         } catch (error) {
           logger.error('关闭数据库连接时出错:', error)

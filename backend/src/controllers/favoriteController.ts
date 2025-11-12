@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
-import { Favorite, Game, User } from '@/models'
+import { getFavoriteRepositoryInstance, getUserRepositoryInstance, getGameRepositoryInstance } from '../repositories'
 import { catchAsync, AppError } from '@/middleware'
-import { getPaginationParams, buildSequelizeQueryOptions, formatPaginationResult } from '@/utils/pagination'
-import { Op } from 'sequelize'
+import { getPaginationParams, formatPaginationResult } from '@/utils/pagination'
 
 /**
  * 获取收藏列表
@@ -10,43 +9,15 @@ import { Op } from 'sequelize'
 export const getFavorites = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId, gameId } = req.query
   const pagination = getPaginationParams(req)
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
-  // 构建查询条件
-  const where: any = {}
-
-  // 用户ID过滤
-  if (userId) {
-    where.userId = userId
-  }
-
-  // 游戏ID过滤
-  if (gameId) {
-    where.gameId = gameId
-  }
-
-  // 构建查询选项
-  const queryOptions = buildSequelizeQueryOptions(pagination, {
-    where,
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'email', 'avatar']
-      },
-      {
-        model: Game,
-        as: 'game',
-        where: { isActive: true }
-      }
-    ],
-    order: [['createdAt', 'DESC']]
-  })
+  // 构建过滤条件
+  const filters: any = {}
+  if (userId) filters.userId = userId as string
+  if (gameId) filters.gameId = gameId as string
 
   // 执行查询
-  const { count, rows } = await Favorite.findAndCountAll(queryOptions)
-
-  // 格式化分页结果
-  const result = formatPaginationResult(rows, count, pagination.page || 1, pagination.limit || 10)
+  const result = await favoriteRepository.findFavoritesWithFilters(filters, pagination)
 
   res.status(200).json({
     status: 'success',
@@ -59,20 +30,9 @@ export const getFavorites = catchAsync(async (req: Request, res: Response, next:
  */
 export const getFavoriteById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
-  const favorite = await Favorite.findByPk(id, {
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'email', 'avatar']
-      },
-      {
-        model: Game,
-        as: 'game'
-      }
-    ]
-  })
+  const favorite = await favoriteRepository.findById(id)
   
   if (!favorite) {
     return next(new AppError('收藏记录不存在', 404))
@@ -91,48 +51,38 @@ export const getFavoriteById = catchAsync(async (req: Request, res: Response, ne
  */
 export const addFavorite = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId, gameId } = req.body
+  const favoriteRepository = getFavoriteRepositoryInstance()
+  const gameRepository = getGameRepositoryInstance()
+  const userRepository = getUserRepositoryInstance()
 
   // 检查游戏是否存在
-  const game = await Game.findByPk(gameId)
+  const game = await gameRepository.findById(gameId)
   if (!game) {
     return next(new AppError('游戏不存在', 404))
   }
 
   // 检查用户是否存在
-  const user = await User.findByPk(userId)
+  const user = await userRepository.findById(userId)
   if (!user) {
     return next(new AppError('用户不存在', 404))
   }
 
   // 检查是否已收藏
-  const existingFavorite = await Favorite.findOne({
-    where: { userId, gameId }
-  })
-
-  if (existingFavorite) {
+  const isFavorited = await favoriteRepository.isFavorited(userId, gameId)
+  if (isFavorited) {
     return next(new AppError('该游戏已在收藏列表中', 400))
   }
 
   // 创建收藏记录
-  const favorite = await Favorite.create({
+  const favorite = favoriteRepository.create({
     userId,
     gameId
   })
 
+  await favoriteRepository.save(favorite)
+
   // 获取完整的收藏记录信息
-  const fullFavorite = await Favorite.findByPk(favorite.id, {
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'email', 'avatar']
-      },
-      {
-        model: Game,
-        as: 'game'
-      }
-    ]
-  })
+  const fullFavorite = await favoriteRepository.findById((favorite as any).id)
 
   res.status(201).json({
     status: 'success',
@@ -148,18 +98,14 @@ export const addFavorite = catchAsync(async (req: Request, res: Response, next: 
  */
 export const removeFavorite = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId, gameId } = req.body
-
-  // 查找收藏记录
-  const favorite = await Favorite.findOne({
-    where: { userId, gameId }
-  })
-
-  if (!favorite) {
-    return next(new AppError('收藏记录不存在', 404))
-  }
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
   // 删除收藏记录
-  await favorite.destroy()
+  const removed = await favoriteRepository.removeByUserAndGame(userId, gameId)
+
+  if (!removed) {
+    return next(new AppError('收藏记录不存在', 404))
+  }
 
   res.status(200).json({
     status: 'success',
@@ -172,13 +118,14 @@ export const removeFavorite = catchAsync(async (req: Request, res: Response, nex
  */
 export const deleteFavorite = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
-  const favorite = await Favorite.findByPk(id)
+  const favorite = await favoriteRepository.findById(id)
   if (!favorite) {
     return next(new AppError('收藏记录不存在', 404))
   }
 
-  await favorite.destroy()
+  await favoriteRepository.remove(favorite)
 
   res.status(200).json({
     status: 'success',
@@ -191,23 +138,22 @@ export const deleteFavorite = catchAsync(async (req: Request, res: Response, nex
  */
 export const checkFavorite = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId, gameId } = req.query
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
   if (!userId || !gameId) {
     return next(new AppError('用户ID和游戏ID不能为空', 400))
   }
 
-  // 查找收藏记录
-  const favorite = await Favorite.findOne({
-    where: { 
-      userId: userId as string,
-      gameId: gameId as string
-    }
-  })
+  // 检查收藏状态
+  const isFavorited = await favoriteRepository.isFavorited(
+    userId as string,
+    gameId as string
+  )
 
   res.status(200).json({
     status: 'success',
     data: {
-      isFavorited: !!favorite
+      isFavorited
     }
   })
 })
@@ -219,56 +165,33 @@ export const getUserFavoriteGames = catchAsync(async (req: Request, res: Respons
   const { userId } = req.params
   const { genre, platform, isFree } = req.query
   const pagination = getPaginationParams(req)
+  const userRepository = getUserRepositoryInstance()
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
   // 检查用户是否存在
-  const user = await User.findByPk(userId)
+  const user = await userRepository.findById(userId)
   if (!user) {
     return next(new AppError('用户不存在', 404))
   }
 
-  // 构建游戏查询条件
-  const gameWhere: any = { isActive: true }
-
-  // 类型过滤
-  if (genre) {
-    gameWhere.genre = { [Op.contains]: [genre] }
-  }
-
-  // 平台过滤
-  if (platform) {
-    gameWhere.platform = { [Op.contains]: [platform] }
-  }
-
-  // 是否免费过滤
-  if (isFree !== undefined) {
-    gameWhere.isFree = isFree === 'true'
-  }
-
-  // 构建查询选项
-  const queryOptions = buildSequelizeQueryOptions(pagination, {
-    where: { userId },
-    include: [
-      {
-        model: Game,
-        as: 'game',
-        where: gameWhere
-      }
-    ],
-    order: [['createdAt', 'DESC']]
-  })
+  // 构建过滤条件
+  const filters: any = {}
+  if (genre) filters.genre = genre
+  if (platform) filters.platform = platform
+  if (isFree) filters.isFree = isFree === 'true'
 
   // 执行查询
-  const { count, rows } = await Favorite.findAndCountAll(queryOptions)
+  const result = await favoriteRepository.findUserFavoriteGames(userId, filters, pagination)
 
   // 提取游戏信息
-  const games = rows.map(favorite => favorite.game)
-
-  // 格式化分页结果
-  const result = formatPaginationResult(games, count, pagination.page || 1, pagination.limit || 10)
+  const games = result.data.map(favorite => favorite.game)
 
   res.status(200).json({
     status: 'success',
-    data: result
+    data: {
+      ...result,
+      data: games
+    }
   })
 })
 
@@ -278,38 +201,27 @@ export const getUserFavoriteGames = catchAsync(async (req: Request, res: Respons
 export const getGameFavoriteUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { gameId } = req.params
   const pagination = getPaginationParams(req)
+  const gameRepository = getGameRepositoryInstance()
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
   // 检查游戏是否存在
-  const game = await Game.findByPk(gameId)
+  const game = await gameRepository.findById(gameId)
   if (!game) {
     return next(new AppError('游戏不存在', 404))
   }
 
-  // 构建查询选项
-  const queryOptions = buildSequelizeQueryOptions(pagination, {
-    where: { gameId },
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'email', 'avatar', 'role']
-      }
-    ],
-    order: [['createdAt', 'DESC']]
-  })
-
   // 执行查询
-  const { count, rows } = await Favorite.findAndCountAll(queryOptions)
+  const result = await favoriteRepository.findGameFavoriteUsers(gameId, pagination)
 
   // 提取用户信息
-  const users = rows.map(favorite => favorite.user)
-
-  // 格式化分页结果
-  const result = formatPaginationResult(users, count, pagination.page || 1, pagination.limit || 10)
+  const users = result.data.map(favorite => favorite.user)
 
   res.status(200).json({
     status: 'success',
-    data: result
+    data: {
+      ...result,
+      data: users
+    }
   })
 })
 
@@ -318,87 +230,18 @@ export const getGameFavoriteUsers = catchAsync(async (req: Request, res: Respons
  */
 export const getFavoriteStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { userId, gameId, period } = req.query
+  const favoriteRepository = getFavoriteRepositoryInstance()
 
-  // 构建查询条件
-  const where: any = {}
+  // 构建过滤条件
+  const filters: any = {}
+  if (userId) filters.userId = userId as string
+  if (gameId) filters.gameId = gameId as string
+  if (period) filters.period = period as 'today' | 'week' | 'month' | 'year'
 
-  // 用户ID过滤
-  if (userId) {
-    where.userId = userId
-  }
+  // 获取统计信息
+  const stats = await favoriteRepository.getFavoriteStats(filters)
 
-  // 游戏ID过滤
-  if (gameId) {
-    where.gameId = gameId
-  }
-
-  // 时间范围过滤
-  if (period) {
-    const now = new Date()
-    let startDate: Date
-
-    switch (period) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        break
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        break
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1)
-        break
-      default:
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // 默认30天
-    }
-
-    where.createdAt = {
-      [Op.gte]: startDate
-    }
-  }
-
-  // 总收藏数
-  const totalFavorites = await Favorite.count({ where })
-
-  // 获取最受欢迎的游戏（按收藏数排序）
-  const popularGames = await Favorite.findAll({
-    where,
-    attributes: [
-      'gameId',
-      [Favorite.sequelize!.fn('COUNT', Favorite.sequelize!.col('gameId')), 'count']
-    ],
-    include: [
-      {
-        model: Game,
-        as: 'game',
-        attributes: ['id', 'title', 'coverImage']
-      }
-    ],
-    group: ['gameId', 'game.id'],
-    order: [[Favorite.sequelize!.literal('count'), 'DESC']],
-    limit: 10
-  })
-
-  // 获取最活跃的用户（按收藏数排序）
-  const activeUsers = await Favorite.findAll({
-    where,
-    attributes: [
-      'userId',
-      [Favorite.sequelize!.fn('COUNT', Favorite.sequelize!.col('userId')), 'count']
-    ],
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'avatar']
-      }
-    ],
-    group: ['userId', 'user.id'],
-    order: [[Favorite.sequelize!.literal('count'), 'DESC']],
-    limit: 10
-  })
+  const { totalFavorites, popularGames, activeUsers } = stats
 
   res.status(200).json({
     status: 'success',

@@ -131,7 +131,7 @@ export const downloadLimiter = rateLimit({
   max: 10, // 限制每个用户在窗口期内最多10次游戏下载
   keyGenerator: (req: Request) => {
     // 如果用户已认证，使用用户ID；否则使用IP
-    return req.user ? req.user.id : req.ip
+    return req.user ? req.user.id : (req.ip || 'unknown')
   },
   standardHeaders: true,
   legacyHeaders: false,
