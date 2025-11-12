@@ -6,6 +6,7 @@ import downloadRoutes from './downloads'
 import favoriteRoutes from './favorites'
 import { requestLogger } from '@/middleware'
 import { getRecommendations } from '@/controllers/gameController'
+import { healthCheck } from '@/controllers/healthController'
 
 const router = Router()
 
@@ -22,13 +23,7 @@ router.use('/favorites', favoriteRoutes)
 // 推荐接口（临时：返回热门游戏）
 router.get('/recommendations', getRecommendations)
 
-// API健康检查
-router.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'API is running',
-    timestamp: new Date().toISOString()
-  })
-})
+// API健康检查（JSON格式）
+router.get('/health', healthCheck)
 
 export default router
