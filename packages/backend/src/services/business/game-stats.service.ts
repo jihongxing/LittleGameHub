@@ -78,14 +78,14 @@ export class GameStatsService {
               AuditEventType.GAME_PLAY,
               `游戏《${game.title || gameId}》播放次数增加 ${increment}，总播放次数：${newPlayCount}`,
               {
-                resourceId: gameId,
-                resourceType: 'game',
-                oldValues: { playCount: game.playCount },
-                newValues: { playCount: newPlayCount },
                 metadata: {
                   increment,
                   gameTitle: game.title,
-                  totalPlayCount: newPlayCount
+                  totalPlayCount: newPlayCount,
+                  resourceId: gameId,
+                  resourceType: 'game',
+                  oldValues: { playCount: game.playCount },
+                  newValues: { playCount: newPlayCount }
                 }
               }
             );
