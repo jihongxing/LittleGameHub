@@ -29,10 +29,12 @@
 
 import { Request, Response, NextFunction } from 'express'
 import { getUserRepositoryInstance } from '../repositories'
-import { generateToken, generateRefreshToken, verifyToken } from '@/utils/jwt'
+import { generateToken, generateRefreshToken, verifyToken, extractTokenFromHeader } from '@/utils/jwt'
 import { hashPassword, verifyPassword, generateRandomToken } from '@/utils/encryption'
 import { sendVerificationEmail, sendPasswordResetEmail } from '@/utils/email'
 import { catchAsync, AppError } from '@/middleware'
+import { tokenBlacklistService } from '@/services/security/token-blacklist.service'
+import { passwordStrengthService } from '@/services/security/password-strength.service'
 
 /**
  * User Registration
@@ -82,6 +84,17 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   }
   if (existingUserByEmail) {
     return next(new AppError('邮箱已被注册', 400))
+  }
+
+  // Check password strength
+  // 检查密码强度
+  const passwordCheck = passwordStrengthService.checkPassword(password, [username, email])
+  if (!passwordCheck.isAcceptable) {
+    const suggestions = passwordCheck.feedback.suggestions.join('；')
+    return next(new AppError(
+      `密码强度不足（强度等级：${passwordCheck.score}/4）。${suggestions}`,
+      400
+    ))
   }
 
   // Generate email verification token
@@ -204,6 +217,59 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
       refreshToken
     }
   })
+})
+
+/**
+ * User Logout
+ * 用户登出
+ * 
+ * Logs out the current user by adding their token to the blacklist.
+ * This invalidates the token and forces the user to login again.
+ * 
+ * 通过将令牌加入黑名单来登出当前用户。
+ * 这会使令牌失效并强制用户重新登录。
+ * 
+ * Process flow:
+ * 1. Extract token from Authorization header
+ * 2. Add token to blacklist (Redis)
+ * 3. Return success message
+ * 
+ * 处理流程：
+ * 1. 从 Authorization 头中提取令牌
+ * 2. 将令牌添加到黑名单（Redis）
+ * 3. 返回成功消息
+ * 
+ * @param req - Express request object with Authorization header
+ *              包含 Authorization 头的 Express 请求对象
+ * @param res - Express response object
+ *              Express 响应对象
+ * @param next - Express next function for error handling
+ *               用于错误处理的 Express next 函数
+ * 
+ * @returns {Promise<void>} JSON response confirming logout
+ *                          确认登出的 JSON 响应
+ */
+export const logout = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // 从请求头中获取令牌
+    const token = extractTokenFromHeader(req.headers.authorization)
+    
+    if (!token) {
+      return next(new AppError('未提供认证令牌', 401))
+    }
+
+    // 将令牌加入黑名单
+    // Token will automatically expire based on its exp claim
+    // 令牌会根据其 exp 声明自动过期
+    await tokenBlacklistService.addToBlacklist(token)
+
+    res.status(200).json({
+      status: 'success',
+      message: '登出成功'
+    })
+  } catch (error) {
+    return next(new AppError('登出失败', 500))
+  }
 })
 
 /**
@@ -356,6 +422,17 @@ export const resetPassword = catchAsync(async (req: Request, res: Response, next
     return next(new AppError('无效或已过期的重置令牌', 400))
   }
 
+  // Check new password strength
+  // 检查新密码强度
+  const passwordCheck = passwordStrengthService.checkPassword(password, [user.nickname || '', user.email || ''])
+  if (!passwordCheck.isAcceptable) {
+    const suggestions = passwordCheck.feedback.suggestions.join('；')
+    return next(new AppError(
+      `新密码强度不足（强度等级：${passwordCheck.score}/4）。${suggestions}`,
+      400
+    ))
+  }
+
   // 更新密码
   const passwordHash = await hashPassword(password)
   await userRepository.updatePassword(user.id, passwordHash)
@@ -457,6 +534,17 @@ export const changePassword = catchAsync(async (req: Request, res: Response, nex
   const isCurrentPasswordValid = await verifyPassword(currentPassword, userWithPassword.password_hash || '')
   if (!isCurrentPasswordValid) {
     return next(new AppError('当前密码错误', 400))
+  }
+
+  // Check new password strength
+  // 检查新密码强度
+  const passwordCheck = passwordStrengthService.checkPassword(newPassword, [user.nickname || '', user.email || ''])
+  if (!passwordCheck.isAcceptable) {
+    const suggestions = passwordCheck.feedback.suggestions.join('；')
+    return next(new AppError(
+      `新密码强度不足（强度等级：${passwordCheck.score}/4）。${suggestions}`,
+      400
+    ))
   }
 
   // 更新密码

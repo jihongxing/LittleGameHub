@@ -33,6 +33,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^10.4.20",
     "@types/pg": "^8.15.6",
+    "@types/zxcvbn": "^4.4.5",
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
@@ -66,7 +67,8 @@
     "swagger-ui-express": "^4.6.3",
     "typeorm": "^0.3.27",
     "uuid": "^9.0.0",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",

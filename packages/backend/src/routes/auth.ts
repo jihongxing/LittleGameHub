@@ -28,6 +28,13 @@ router.post(
   authController.login
 )
 
+// 用户登出
+router.post(
+  '/logout',
+  authenticate,
+  authController.logout
+)
+
 // 刷新令牌
 router.post(
   '/refresh',

@@ -3,6 +3,7 @@ import { verifyToken, extractTokenFromHeader } from '@/utils/jwt'
 import { User } from '../modules/users/entities/user.entity'
 import { getUserRepository } from '../services/repository.service'
 import { AppError } from './errorHandler'
+import { tokenBlacklistService } from '@/services/security/token-blacklist.service'
 
 /**
  * 扩展Request接口，添加用户信息
@@ -29,6 +30,12 @@ export const authenticate = async (
     
     if (!token) {
       return next(new AppError('未提供认证令牌', 401))
+    }
+
+    // 检查令牌是否在黑名单中
+    const isBlacklisted = await tokenBlacklistService.isBlacklisted(token)
+    if (isBlacklisted) {
+      return next(new AppError('令牌已失效，请重新登录', 401))
     }
 
     // 验证令牌

@@ -1,7 +1,7 @@
 # Phase 2: 防御性编程 - 进度追踪
 
 **开始日期**: 2025-11-13  
-**当前阶段**: Week 3 Day 1-2  
+**当前阶段**: Week 3 Day 3-4  
 **分支**: `feature/phase2-defensive-programming`
 
 ---
@@ -83,31 +83,70 @@
 - ✅ Backend 依赖 @littlegamehub/shared 包
 - ✅ 所有类型检查通过
 
+### Week 3 Day 3-4: JWT 黑名单 + 密码策略 (✅ 100% 完成)
+
+#### 已实现的功能
+
+**1. JWT Token 黑名单服务** (`packages/backend/src/services/security/token-blacklist.service.ts`)
+- ✅ `TokenBlacklistService` 类实现
+- ✅ `addToBlacklist()` - 将 Token 加入黑名单，自动从 JWT 解析过期时间
+- ✅ `isBlacklisted()` - 检查 Token 是否在黑名单中
+- ✅ `removeFromBlacklist()` - 从黑名单移除（测试用）
+- ✅ `clearBlacklist()` - 清空黑名单（测试用）
+- ✅ `getBlacklistSize()` - 获取黑名单大小
+- ✅ Redis 存储 + 内存备份降级策略
+- ✅ Token 自动过期机制（基于 JWT exp claim）
+
+**2. 密码强度检查服务** (`packages/backend/src/services/security/password-strength.service.ts`)
+- ✅ `PasswordStrengthService` 类实现
+- ✅ 使用 `zxcvbn` 库进行密码强度评估
+- ✅ `checkPassword()` - 检查密码强度（0-4 级）
+- ✅ `isPasswordAcceptable()` - 验证密码是否符合最低强度要求（最低 FAIR 级）
+- ✅ `getPasswordSuggestions()` - 获取密码强度建议
+- ✅ 警告和建议信息中文翻译
+- ✅ 防止密码包含用户名或邮箱
+- ✅ 破解时间估算
+
+**3. 认证中间件更新** (`packages/backend/src/middleware/auth.ts`)
+- ✅ 导入 `tokenBlacklistService`
+- ✅ 在 `authenticate` 中间件中添加黑名单检查
+- ✅ 如果 Token 在黑名单中，返回 401 "令牌已失效，请重新登录"
+
+**4. 登出功能实现**
+- ✅ `authController.logout` - 登出控制器
+  - 提取 Authorization 头中的 Token
+  - 将 Token 加入黑名单
+  - 返回成功消息
+- ✅ 路由配置 `POST /api/auth/logout` (需要身份验证)
+
+**5. 密码强度集成**
+- ✅ `authController.register` - 注册时检查密码强度
+  - 密码强度低于 FAIR (2) 级时拒绝注册
+  - 返回详细的密码强度建议
+- ✅ `authController.changePassword` - 修改密码时检查新密码强度
+- ✅ `authController.resetPassword` - 重置密码时检查新密码强度
+- ✅ 所有密码检查都使用用户名和邮箱作为上下文
+
+**6. 依赖安装**
+- ✅ `zxcvbn` - 密码强度检查库
+- ✅ `@types/zxcvbn` - TypeScript 类型定义
+
+**7. 类型检查和错误修复**
+- ✅ 修复 `redisClient` 导入问题（使用 `getRedisClient()` 函数）
+- ✅ 修复密码强度服务中的类型转换问题
+- ✅ 所有 TypeScript 类型检查通过
+
 ---
 
 ## 🔄 进行中
 
-### Week 3 Day 3-4: JWT 黑名单 + 密码策略 (待开始)
-
-下一步任务：
-- [ ] 实现 JWT Token 黑名单服务（Redis）
-- [ ] 更新认证中间件，检查黑名单
-- [ ] 实现登出功能
-- [ ] 集成 zxcvbn 密码强度检查
-- [ ] 更新注册和修改密码逻辑
+目前暂无进行中的任务
 
 ---
 
 ## 📋 待办事项
 
-### Week 3 Day 3-4: JWT 黑名单 + 密码策略
-- [ ] 实现 JWT Token 黑名单服务
-- [ ] 更新认证中间件
-- [ ] 实现登出功能
-- [ ] 集成 zxcvbn 密码强度检查
-- [ ] 更新注册和修改密码逻辑
-
-### Week 3 Day 5: 错误处理优化
+### Week 3 Day 5: 错误处理优化 (下一步任务)
 - [ ] 重构 errorHandler 中间件
 - [ ] 实现错误分类
 - [ ] 隐藏生产环境敏感信息
@@ -131,11 +170,13 @@
 ## 📊 统计数据
 
 ### 代码量统计
-- **新增文件**: 19 个
-- **新增代码**: 760+ 行
-- **修改文件**: 8 个
+- **新增文件**: 23 个
+- **新增代码**: 1300+ 行
+- **修改文件**: 10 个
 
 ### 文件清单
+
+#### Week 3 Day 1-2: DTO 验证系统
 ```
 packages/shared/src/validation/
 ├── common/
@@ -155,39 +196,51 @@ packages/shared/src/validation/
 │   ├── update-game.dto.ts    (59 lines)  ✅
 │   └── index.ts              ✅
 └── index.ts                  ✅
+
+packages/backend/src/middleware/validation/
+├── validateDto.ts            (118 lines) ✅
+└── index.ts                  ✅
+```
+
+#### Week 3 Day 3-4: JWT 黑名单 + 密码策略
+```
+packages/backend/src/services/security/
+├── token-blacklist.service.ts (175 lines) ✅
+├── password-strength.service.ts (172 lines) ✅
+└── index.ts                    ✅
+
+修改文件:
+├── packages/backend/src/middleware/auth.ts      (添加黑名单检查) ✅
+├── packages/backend/src/controllers/authController.ts (添加登出、密码强度) ✅
+└── packages/backend/src/routes/auth.ts           (添加登出路由) ✅
 ```
 
 ---
 
 ## 🎯 下一步行动
 
-### 立即任务（今天/明天）
+### Week 3 Day 5: 错误处理优化
 
-1. **创建验证中间件**
-   ```typescript
-   // packages/backend/src/middleware/validateDto.ts
-   export function validateDto(dtoClass: any) {
-     return async (req, res, next) => {
-       // 使用 class-validator 验证
-     }
-   }
-   ```
+下一步任务：
+1. **重构 errorHandler 中间件**
+   - 实现错误分类系统
+   - 区分操作错误 vs 程序错误
+   - 自定义错误类型
 
-2. **应用到 Auth 控制器**
-   ```typescript
-   import { RegisterDto, LoginDto } from '@littlegamehub/shared';
-   
-   router.post('/register', validateDto(RegisterDto), authController.register);
-   router.post('/login', validateDto(LoginDto), authController.login);
-   ```
+2. **隐藏生产环境敏感信息**
+   - 生产环境不返回堆栈信息
+   - 隐藏数据库错误详情
+   - 统一错误响应格式
 
-3. **应用到 Game 控制器**
-   ```typescript
-   import { QueryGamesDto, CreateGameDto } from '@littlegamehub/shared';
-   
-   router.get('/games', validateDto(QueryGamesDto), gameController.getGames);
-   router.post('/games', validateDto(CreateGameDto), gameController.createGame);
-   ```
+3. **实现重试机制**
+   - 数据库操作重试
+   - 外部 API 调用重试
+   - 指数退避策略
+
+4. **添加详细日志**
+   - 错误级别分类
+   - 请求上下文记录
+   - 错误堆栈追踪
 
 ---
 
@@ -232,13 +285,14 @@ if (errors.length > 0) {
 
 ## 🎉 里程碑
 
-- ✅ **2025-11-13**: Phase 2 开始，DTO 验证系统核心完成
-- 🎯 **预计 2025-11-15**: Week 3 完成（输入验证 + JWT 安全）
+- ✅ **2025-11-13 上午**: Phase 2 开始，DTO 验证系统核心完成
+- ✅ **2025-11-13 晚上**: JWT 黑名单 + 密码策略完成
+- 🎯 **预计 2025-11-15**: Week 3 完成（输入验证 + JWT 安全 + 错误处理）
 - 🎯 **预计 2025-11-22**: Week 4 完成（安全防护 + 并发控制）
 - 🎯 **预计 2025-11-29**: Week 5 完成（完善 + 测试）
 
 ---
 
 **最后更新**: 2025-11-13  
-**完成度**: 约 30% (Week 3 Day 1-2 已完成 100%)
+**完成度**: 约 50% (Week 3 Day 1-4 已完成 100%)
 
