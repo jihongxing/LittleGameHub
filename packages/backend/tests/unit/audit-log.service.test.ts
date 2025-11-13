@@ -474,7 +474,7 @@ describe('AuditLogService', () => {
         .mockReturnValueOnce(topUsersQueryBuilder as any)
         .mockReturnValueOnce(topIPsQueryBuilder as any);
 
-      (mockAuditLogRepository.getCount as jest.Mock).mockResolvedValue(18);
+      (mockAuditLogRepository as any).getCount.mockResolvedValue(18);
 
       const stats = await service.getAuditStats();
 
@@ -521,7 +521,7 @@ describe('AuditLogService', () => {
       };
 
       mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      (mockAuditLogRepository.getCount as jest.Mock).mockResolvedValue(5);
+      (mockAuditLogRepository as any).getCount.mockResolvedValue(5);
 
       const stats = await service.getAuditStats(startDate, endDate);
 

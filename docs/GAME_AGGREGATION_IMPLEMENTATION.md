@@ -35,64 +35,46 @@
 
 ## 📋 下一步要做的工作
 
-### Step 1: 创建Game实体 (1小时)
+### Step 1: 扩展现有Game实体 (30分钟) ✅
 
-创建文件：`packages/backend/src/entities/game.entity.ts`
+**现有实体位置**：`packages/backend/src/modules/games/entities/game.entity.ts`
 
+**已存在的字段**：
+- ✅ title, description, coverImageUrl, gameUrl
+- ✅ categoryTags, pointRewardRules
+- ✅ availabilityStatus, isFeatured, playCount, averageRating
+- ✅ 业务逻辑方法（calculatePoints, isPlayable等）
+
+**已添加的字段**（用于游戏聚合）：
 ```typescript
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+// 游戏来源相关字段
+@Column({ type: 'varchar', length: 50, name: 'source', nullable: true })
+source: string | null; // 'rawg', 'itch', 'igdb', 'wechat', 'douyin'
 
-@Entity('games')
-export class Game {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+@Column({ type: 'varchar', length: 100, name: 'source_id', nullable: true })
+sourceId: string | null; // 原始平台的游戏ID
 
-  @Column()
-  source: string; // 'rawg', 'itch', 'igdb', 'wechat', 'douyin'
+@Column({ type: 'varchar', length: 500, name: 'source_url', nullable: true })
+sourceUrl: string | null; // 原始游戏的直接链接
 
-  @Column()
-  sourceId: string;
+// 游戏元数据
+@Column({ type: 'jsonb', name: 'genres', default: [], nullable: true })
+genres: string[] | null; // 游戏类型
 
-  @Column()
-  sourceUrl: string; // 原始游戏链接
+@Column({ type: 'jsonb', name: 'platforms', default: [], nullable: true })
+platforms: string[] | null; // 游戏平台
 
-  @Column()
-  title: string;
+@Column({ type: 'varchar', length: 100, name: 'release_date', nullable: true })
+releaseDate: string | null; // 发布日期
 
-  @Column('text', { nullable: true })
-  description: string;
-
-  @Column({ nullable: true })
-  coverUrl: string;
-
-  @Column('float', { default: 0 })
-  rating: number;
-
-  @Column('simple-array', { nullable: true })
-  genres: string[];
-
-  @Column('simple-array', { nullable: true })
-  platforms: string[];
-
-  @Column({ nullable: true })
-  releaseDate: string;
-
-  @Column({ default: 0 })
-  viewCount: number;
-
-  @Column({ default: 0 })
-  playCount: number;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Column({ default: true })
-  isActive: boolean;
-}
+@Column({ type: 'decimal', precision: 5, scale: 2, name: 'rating', nullable: true })
+rating: number | null; // 游戏评分
 ```
+
+**修改说明**：
+- 这些字段都设置为 `nullable: true`，以兼容现有的游戏
+- 使用 `name` 属性指定数据库列名（snake_case）
+- 利用现有的 SnakeCaseNamingStrategy 自动处理映射
 
 ### Step 2: 创建GameRepository (30分钟)
 

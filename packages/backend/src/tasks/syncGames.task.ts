@@ -1,35 +1,20 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GameAggregationService } from '../services/gameAggregation.service';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 
-// 临时接口，实际使用时应导入真实的Game实体
-interface Game {
-  id: string;
-  source: string;
-  sourceId: string;
-  sourceUrl: string;
-  title: string;
-  description: string;
-  coverUrl: string;
-  rating: number;
-  genres: string[];
-  platforms: string[];
-  releaseDate: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-}
-
+/**
+ * 游戏同步定时任务
+ * Game Synchronization Scheduled Task
+ * 
+ * 每天凌晨2点自动从多个平台聚合游戏数据
+ * Automatically aggregates game data from multiple platforms at 2 AM daily
+ */
 @Injectable()
 export class SyncGamesTask implements OnModuleInit {
   private readonly logger = new Logger(SyncGamesTask.name);
   private syncInterval: NodeJS.Timeout;
 
   constructor(
-    private gameAggregationService: GameAggregationService,
-    @InjectRepository('Game')
-    private gameRepository: Repository<Game>,
+    private readonly gameAggregationService: GameAggregationService,
   ) {}
 
   /**
@@ -65,37 +50,60 @@ export class SyncGamesTask implements OnModuleInit {
 
   /**
    * 游戏同步主方法
+   * Main game synchronization method
+   * 
+   * 流程：
+   * 1. 从RAWG、Itch.io、IGDB聚合游戏
+   * 2. 去重处理
+   * 3. 过滤不适当内容
+   * 4. 保存到数据库
    */
   async syncGames() {
     this.logger.log('🔄 开始同步游戏数据...');
     const startTime = Date.now();
 
     try {
-      // 1. 聚合游戏
+      // 1. 聚合游戏（从RAWG、Itch.io、IGDB）
+      this.logger.log('📥 正在聚合游戏数据...');
       let games = await this.gameAggregationService.aggregateAllGames(5000);
-      this.logger.log(`📥 聚合了 ${games.length} 款游戏`);
+      this.logger.log(`✅ 聚合了 ${games.length} 款游戏`);
 
       // 2. 去重
+      this.logger.log('🔄 正在去重...');
       games = this.gameAggregationService.deduplicateGames(games);
-      this.logger.log(`🔄 去重后 ${games.length} 款游戏`);
+      this.logger.log(`✅ 去重后 ${games.length} 款游戏`);
 
-      // 3. 过滤
+      // 3. 过滤不适当的游戏
+      this.logger.log('🔍 正在过滤...');
       games = this.gameAggregationService.filterGames(games);
       this.logger.log(`✅ 过滤后 ${games.length} 款游戏`);
 
-      // 4. 保存到数据库
-      await this.upsertGames(games);
-      this.logger.log(`💾 成功保存到数据库`);
+      // 4. 保存到数据库（使用GameAggregationService的saveGames方法）
+      this.logger.log('💾 正在保存到数据库...');
+      const savedCount = await this.gameAggregationService.saveGames(games);
+      this.logger.log(`✅ 成功保存 ${savedCount} 款游戏`);
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
       this.logger.log(`✨ 游戏同步完成！耗时 ${duration} 秒`);
+      
+      // 记录统计信息
+      this.logger.log(`📊 本次同步统计：`);
+      this.logger.log(`   - 聚合游戏数：${games.length}`);
+      this.logger.log(`   - 保存游戏数：${savedCount}`);
+      this.logger.log(`   - 耗时：${duration}秒`);
     } catch (error) {
       this.logger.error('❌ 游戏同步失败:', error);
+      this.logger.error('错误详情:', error instanceof Error ? error.message : String(error));
     }
   }
 
   /**
    * 手动触发同步（用于测试）
+   * Manual trigger for synchronization (for testing)
+   * 
+   * 使用示例：
+   * const syncTask = app.get(SyncGamesTask);
+   * await syncTask.manualSync();
    */
   async manualSync() {
     this.logger.log('🔄 手动触发游戏同步...');
@@ -103,69 +111,13 @@ export class SyncGamesTask implements OnModuleInit {
   }
 
   /**
-   * 批量插入或更新游戏
+   * 销毁定时任务（应用关闭时调用）
+   * Destroy scheduled task (call when application shuts down)
    */
-  private async upsertGames(games: any[]) {
-    for (const game of games) {
-      // 检查游戏是否已存在
-      const existing = await this.gameRepository.findOne({
-        where: {
-          source: game.source,
-          sourceId: game.sourceId,
-        },
-      });
-
-      if (existing) {
-        // 更新现有游戏
-        await this.gameRepository.update(
-          { id: existing.id },
-          {
-            title: game.title,
-            description: game.description,
-            coverUrl: game.coverUrl,
-            rating: game.rating,
-            genres: game.genres,
-            platforms: game.platforms,
-            releaseDate: game.releaseDate,
-            updatedAt: new Date(),
-          }
-        );
-      } else {
-        // 创建新游戏
-        const newGame = this.gameRepository.create({
-          source: game.source,
-          sourceId: game.sourceId,
-          sourceUrl: `${this.buildSourceUrl(game.source)}/${game.sourceId}`,
-          title: game.title,
-          description: game.description,
-          coverUrl: game.coverUrl,
-          rating: game.rating,
-          genres: game.genres,
-          platforms: game.platforms,
-          releaseDate: game.releaseDate,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        await this.gameRepository.save(newGame);
-      }
+  onDestroy() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.logger.log('✅ 定时同步任务已停止');
     }
-
-    this.logger.log(`✅ 成功处理 ${games.length} 款游戏`);
-  }
-
-  /**
-   * 构建原始游戏链接
-   */
-  private buildSourceUrl(source: string): string {
-    const urls: Record<string, string> = {
-      rawg: 'https://rawg.io/games',
-      itch: 'https://itch.io/games',
-      igdb: 'https://www.igdb.com/games',
-      wechat: 'https://minigame.qq.com/game',
-      douyin: 'https://www.douyin.com/game',
-    };
-    return urls[source] || '';
   }
 }
