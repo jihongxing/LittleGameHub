@@ -85,14 +85,13 @@ describe('AuditLogService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AuditLogService,
+        {
+          provide: AuditLogService,
+          useFactory: () => new AuditLogService(mockDataSource as any),
+        },
         {
           provide: getRepositoryToken(AuditLog),
           useValue: mockRepository,
-        },
-        {
-          provide: 'DataSource',
-          useValue: mockDataSource,
         },
       ],
     }).compile();

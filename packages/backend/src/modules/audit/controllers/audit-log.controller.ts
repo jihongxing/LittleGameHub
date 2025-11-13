@@ -114,7 +114,7 @@ export class AuditLogController {
         {
           status: 'error',
           message: '获取审计日志详情失败',
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );

@@ -35,7 +35,7 @@ export class GameAggregationController {
       };
     } catch (error) {
       this.logger.error('获取游戏列表失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
@@ -53,7 +53,7 @@ export class GameAggregationController {
       return { error: '游戏不存在' };
     } catch (error) {
       this.logger.error('获取游戏详情失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
@@ -71,7 +71,7 @@ export class GameAggregationController {
       return [];
     } catch (error) {
       this.logger.error('搜索游戏失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
@@ -93,7 +93,7 @@ export class GameAggregationController {
       };
     } catch (error) {
       this.logger.error('按来源获取游戏失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
@@ -118,7 +118,7 @@ export class GameAggregationController {
       return { message: '同步任务已启动' };
     } catch (error) {
       this.logger.error('手动同步失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
@@ -146,7 +146,7 @@ export class GameAggregationController {
       };
     } catch (error) {
       this.logger.error('获取统计信息失败:', error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 }

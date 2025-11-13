@@ -20,7 +20,11 @@
     "type-check": "tsc --noEmit",
     "migrate": "npx sequelize-cli db:migrate",
     "seed": "npx sequelize-cli db:seed:all",
-    "verify:mappings": "ts-node src/scripts/verify-field-mappings.ts"
+    "verify:mappings": "ts-node src/scripts/verify-field-mappings.ts",
+    "migration:run": "node ./node_modules/typeorm/cli.js migration:run -d src/database/data-source.js",
+    "migration:revert": "node ./node_modules/typeorm/cli.js migration:revert -d src/database/data-source.js",
+    "migration:generate": "node ./node_modules/typeorm/cli.js migration:generate -d src/database/data-source.js",
+    "migration:show": "node ./node_modules/typeorm/cli.js migration:show -d src/database/data-source.js"
   },
   "dependencies": {
     "@littlegamehub/shared": "workspace:*",

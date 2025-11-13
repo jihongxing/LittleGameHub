@@ -94,7 +94,18 @@ export class TransactionService {
       try {
         // 启动事务
         await queryRunner.connect();
-        await queryRunner.startTransaction(opts.isolationLevel);
+
+        // 设置隔离级别
+        if (opts.isolationLevel) {
+          await queryRunner.query(`SET TRANSACTION ISOLATION LEVEL ${opts.isolationLevel}`);
+        }
+
+        // 设置超时
+        if (opts.timeout) {
+          await queryRunner.query(`SET LOCAL statement_timeout = ${opts.timeout}`);
+        }
+
+        await queryRunner.startTransaction();
 
         // 执行操作
         const context: TransactionContext = {

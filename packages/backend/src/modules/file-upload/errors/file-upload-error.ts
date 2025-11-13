@@ -124,9 +124,7 @@ export class FileUploadError extends AppError {
    */
   static batchUploadFailed(failedCount: number, totalCount: number, errors: string[]): FileUploadError {
     const message = `批量上传失败: ${failedCount}/${totalCount} 个文件处理失败`;
-    const error = new FileUploadError(message, 'BATCH_UPLOAD_FAILED');
-    error.metadata = { failedCount, totalCount, errors };
-    return error;
+    return new FileUploadError(message, 'BATCH_UPLOAD_FAILED', undefined, { failedCount, totalCount, errors });
   }
 
   /**
