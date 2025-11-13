@@ -52,6 +52,7 @@ import { CollectionsModule } from './modules/collections/collections.module';
 import { OfflineModule } from './modules/offline/offline.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { FileUploadModule } from './modules/file-upload/file-upload.module';
 
 // Configuration - 配置
 import { getTypeOrmConfig } from './config/database.config';
@@ -100,6 +101,7 @@ import { getTypeOrmConfig } from './config/database.config';
     OfflineModule,            // Offline game management - 离线游戏管理
     AchievementsModule,       // Achievement system - 成就系统
     AuditModule,              // Audit logging system - 审计日志系统
+    FileUploadModule,         // Secure file upload system - 安全文件上传系统
 
     // TODO: Add more feature modules here
     // 待办：在此处添加更多功能模块
