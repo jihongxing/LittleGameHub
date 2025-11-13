@@ -17,7 +17,7 @@
   - `zxcvbn` - 密码强度检查
 - ✅ 配置 TypeScript 装饰器支持
 
-### Week 3 Day 1-2: DTO 验证系统 (✅ 80% 完成)
+### Week 3 Day 1-2: DTO 验证系统 (✅ 100% 完成)
 
 #### 已实现的功能
 
@@ -61,17 +61,40 @@
 - ✅ 所有 DTO 和工具正确导出
 - ✅ TypeScript 类型定义生成
 
+**7. 验证中间件** (`packages/backend/src/middleware/validation/`)
+- ✅ `validateDto()` - 通用 DTO 验证中间件
+- ✅ `validateBody()` - Body 验证便捷方法
+- ✅ `validateQuery()` - Query 参数验证便捷方法
+- ✅ `validateParams()` - URL 参数验证便捷方法
+- ✅ 详细的验证错误消息格式化
+- ✅ 自动数据转换和清洗
+- ✅ Whitelist 模式（移除未定义属性）
+
+**8. 路由层面应用验证**
+- ✅ Auth 路由更新
+  - `/register` - RegisterDto
+  - `/login` - LoginDto
+  - `/me` (PUT) - UpdateProfileDto
+  - `/change-password` - ChangePasswordDto
+- ✅ Game 路由更新
+  - `/games` (GET) - QueryGamesDto
+  - `/games` (POST) - CreateGameDto
+  - `/games/:id` (PUT) - UpdateGameDto
+- ✅ Backend 依赖 @littlegamehub/shared 包
+- ✅ 所有类型检查通过
+
 ---
 
 ## 🔄 进行中
 
-### Week 3 Day 1-2: DTO 验证系统 (20% 待完成)
+### Week 3 Day 3-4: JWT 黑名单 + 密码策略 (待开始)
 
-剩余任务：
-- [ ] 创建验证中间件（backend）
-- [ ] 在 backend 控制器中应用 DTOs
-- [ ] 在 frontend 复用 DTOs
-- [ ] 添加验证错误处理
+下一步任务：
+- [ ] 实现 JWT Token 黑名单服务（Redis）
+- [ ] 更新认证中间件，检查黑名单
+- [ ] 实现登出功能
+- [ ] 集成 zxcvbn 密码强度检查
+- [ ] 更新注册和修改密码逻辑
 
 ---
 
@@ -108,9 +131,9 @@
 ## 📊 统计数据
 
 ### 代码量统计
-- **新增文件**: 17 个
-- **新增代码**: 610+ 行
-- **修改文件**: 5 个
+- **新增文件**: 19 个
+- **新增代码**: 760+ 行
+- **修改文件**: 8 个
 
 ### 文件清单
 ```
@@ -217,5 +240,5 @@ if (errors.length > 0) {
 ---
 
 **最后更新**: 2025-11-13  
-**完成度**: 约 25% (Week 3 Day 1-2 的 80%)
+**完成度**: 约 30% (Week 3 Day 1-2 已完成 100%)
 
