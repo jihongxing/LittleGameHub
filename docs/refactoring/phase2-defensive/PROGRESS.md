@@ -1,7 +1,7 @@
 # Phase 2: 防御性编程 - 进度追踪
 
 **开始日期**: 2025-11-13  
-**当前阶段**: Week 3 Day 3-4  
+**当前阶段**: Week 3 Day 5  
 **分支**: `feature/phase2-defensive-programming`
 
 ---
@@ -136,6 +136,81 @@
 - ✅ 修复密码强度服务中的类型转换问题
 - ✅ 所有 TypeScript 类型检查通过
 
+### Week 3 Day 5: 错误处理优化 (✅ 100% 完成)
+
+#### 已实现的功能
+
+**1. 错误类型系统** (`packages/backend/src/types/errors.ts`)
+- ✅ `ErrorType` 枚举 - 12 种错误类型分类
+  - 操作错误：VALIDATION, AUTHENTICATION, AUTHORIZATION, NOT_FOUND, CONFLICT, BAD_REQUEST, RATE_LIMIT
+  - 程序错误：DATABASE, INTERNAL, NETWORK, EXTERNAL_API, FILE_SYSTEM
+- ✅ `ErrorSeverity` 枚举 - 4 级严重程度（LOW, MEDIUM, HIGH, CRITICAL）
+- ✅ 可重试错误类型定义
+- ✅ 错误类型到 HTTP 状态码的映射
+- ✅ 错误类型到严重程度的映射
+
+**2. 增强的错误类** (`packages/backend/src/middleware/errorHandler.ts`)
+- ✅ `AppError` - 基础错误类
+  - 支持错误类型、严重程度、时间戳、请求 ID
+  - `toJSON()` 方法用于安全的客户端响应
+- ✅ 特定错误类
+  - `ValidationError` - 验证错误
+  - `AuthenticationError` - 认证错误
+  - `AuthorizationError` - 授权错误
+  - `NotFoundError` - 资源未找到错误
+  - `ConflictError` - 冲突错误
+  - `RateLimitError` - 频率限制错误
+  - `DatabaseError` - 数据库错误
+
+**3. 错误处理增强**
+- ✅ TypeORM `QueryFailedError` 处理
+  - 唯一约束冲突识别
+  - 外键约束冲突识别
+  - NOT NULL 约束识别
+  - CHECK 约束识别
+  - 自动提取字段名并友好提示
+- ✅ JWT 错误处理（TokenExpiredError, JsonWebTokenError）
+- ✅ Multer 文件上传错误处理
+- ✅ JSON 解析错误处理
+
+**4. 生产环境安全**
+- ✅ 开发环境返回完整错误信息（堆栈、详情）
+- ✅ 生产环境隐藏敏感信息
+  - 操作错误只返回消息
+  - 程序错误返回通用消息
+  - 详细日志记录但不返回给客户端
+- ✅ 请求上下文记录（URL, method, IP, User-Agent）
+
+**5. 重试机制** (`packages/backend/src/utils/retry.ts`)
+- ✅ `retry()` 函数 - 通用异步重试执行器
+  - 指数退避策略
+  - 可配置最大重试次数
+  - 可配置延迟时间（初始、最大、倍数）
+  - 自定义重试判断函数
+  - 重试前回调
+- ✅ `shouldRetryDatabaseError()` - 数据库错误重试判断
+  - 连接错误（ECONNREFUSED, ECONNRESET）
+  - 超时错误（ETIMEDOUT）
+  - 锁等待超时、死锁
+  - PostgreSQL 序列化失败、死锁检测
+- ✅ `shouldRetryNetworkError()` - 网络错误重试判断
+  - 网络连接错误
+  - HTTP 429 或 5xx 状态码
+- ✅ 装饰器支持
+  - `@withDatabaseRetry()` - 数据库操作重试装饰器
+  - `@withApiRetry()` - 外部 API 调用重试装饰器
+
+**6. 全局错误处理**
+- ✅ `handleUncaughtException` - 未捕获异常处理
+- ✅ `handleUnhandledRejection` - 未处理 Promise 拒绝处理
+- ✅ 在 `app.ts` 中注册全局错误处理器
+
+**7. 错误日志优化**
+- ✅ 错误类型标注
+- ✅ 严重程度记录
+- ✅ 请求上下文记录
+- ✅ 堆栈追踪（开发环境）
+
 ---
 
 ## 🔄 进行中
@@ -145,13 +220,6 @@
 ---
 
 ## 📋 待办事项
-
-### Week 3 Day 5: 错误处理优化 (下一步任务)
-- [ ] 重构 errorHandler 中间件
-- [ ] 实现错误分类
-- [ ] 隐藏生产环境敏感信息
-- [ ] 实现重试机制
-- [ ] 添加错误日志
 
 ### Week 4: 安全防护 + 并发控制
 - [ ] CSRF 保护
@@ -170,9 +238,9 @@
 ## 📊 统计数据
 
 ### 代码量统计
-- **新增文件**: 23 个
-- **新增代码**: 1300+ 行
-- **修改文件**: 10 个
+- **新增文件**: 26 个
+- **新增代码**: 1900+ 行
+- **修改文件**: 12 个
 
 ### 文件清单
 
@@ -215,32 +283,41 @@ packages/backend/src/services/security/
 └── packages/backend/src/routes/auth.ts           (添加登出路由) ✅
 ```
 
+#### Week 3 Day 5: 错误处理优化
+```
+packages/backend/src/types/
+└── errors.ts                   (76 lines)  ✅
+
+packages/backend/src/utils/
+└── retry.ts                    (233 lines) ✅
+
+修改文件:
+├── packages/backend/src/middleware/errorHandler.ts  (重构，345 lines) ✅
+├── packages/backend/src/middleware/index.ts          (导出新错误类) ✅
+└── packages/backend/src/app.ts                       (注册全局错误处理) ✅
+```
+
 ---
 
 ## 🎯 下一步行动
 
-### Week 3 Day 5: 错误处理优化
+### Week 4 Day 1-2: CSRF + Rate Limiting
 
 下一步任务：
-1. **重构 errorHandler 中间件**
-   - 实现错误分类系统
-   - 区分操作错误 vs 程序错误
-   - 自定义错误类型
+1. **CSRF 保护**
+   - 实现 CSRF Token 生成和验证
+   - 集成到表单提交和状态更改操作
+   - 配置 CSRF 白名单
 
-2. **隐藏生产环境敏感信息**
-   - 生产环境不返回堆栈信息
-   - 隐藏数据库错误详情
-   - 统一错误响应格式
+2. **Rate Limiting 增强**
+   - 基于用户的限流（而不仅仅是 IP）
+   - 动态限流策略
+   - 限流指标监控和告警
 
-3. **实现重试机制**
-   - 数据库操作重试
-   - 外部 API 调用重试
-   - 指数退避策略
-
-4. **添加详细日志**
-   - 错误级别分类
-   - 请求上下文记录
-   - 错误堆栈追踪
+3. **API 端点保护**
+   - 识别高风险端点
+   - 应用不同级别的限流策略
+   - 实现限流绕过机制（测试用）
 
 ---
 
@@ -286,13 +363,14 @@ if (errors.length > 0) {
 ## 🎉 里程碑
 
 - ✅ **2025-11-13 上午**: Phase 2 开始，DTO 验证系统核心完成
-- ✅ **2025-11-13 晚上**: JWT 黑名单 + 密码策略完成
-- 🎯 **预计 2025-11-15**: Week 3 完成（输入验证 + JWT 安全 + 错误处理）
-- 🎯 **预计 2025-11-22**: Week 4 完成（安全防护 + 并发控制）
-- 🎯 **预计 2025-11-29**: Week 5 完成（完善 + 测试）
+- ✅ **2025-11-13 中午**: JWT 黑名单 + 密码策略完成
+- ✅ **2025-11-13 晚上**: Week 3 完成！错误处理优化完成
+- 🎯 **预计 2025-11-16**: Week 4 Day 1-2 完成（CSRF + Rate Limiting）
+- 🎯 **预计 2025-11-20**: Week 4 完成（安全防护 + 并发控制）
+- 🎯 **预计 2025-11-27**: Week 5 完成（完善 + 测试）
 
 ---
 
 **最后更新**: 2025-11-13  
-**完成度**: 约 50% (Week 3 Day 1-4 已完成 100%)
+**完成度**: 约 60% (Week 3 已完成 100%，Week 4-5 待完成)
 

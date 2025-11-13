@@ -9,12 +9,19 @@ import path from 'path'
 import { AppDataSource } from '@/config/database.config'
 import { repositoryService } from '@/services/repository.service'
 import { errorHandler, notFoundHandler } from '@/middleware'
+import { handleUnhandledRejection, handleUncaughtException } from '@/middleware/errorHandler'
 import routes from '@/routes'
 import { logger } from '@/utils'
 import { statusPage } from '@/controllers/healthController'
 
 // 加载环境变量
 dotenv.config()
+
+// 注册全局未捕获异常处理器（应该在所有代码之前）
+process.on('uncaughtException', handleUncaughtException)
+
+// 注册全局未处理 Promise 拒绝处理器
+process.on('unhandledRejection', handleUnhandledRejection)
 
 // 创建Express应用
 const app = express()

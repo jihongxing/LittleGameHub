@@ -1,6 +1,17 @@
 // 导出所有中间件
 export { authenticate, optionalAuthenticate, authorize, requireAdmin, requireEmailVerification } from './auth'
-export { errorHandler, catchAsync, AppError } from './errorHandler'
+export { 
+  errorHandler, 
+  catchAsync, 
+  AppError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  RateLimitError,
+  DatabaseError
+} from './errorHandler'
 export { notFoundHandler } from './notFoundHandler'
 export { requestLogger } from './requestLogger'
 import {
