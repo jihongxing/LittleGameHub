@@ -8,7 +8,7 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { AppDataSource } from '@/config/database.config'
 import { repositoryService } from '@/services/repository.service'
-import { errorHandler, notFoundHandler } from '@/middleware'
+import { errorHandler, notFoundHandler, csrfTokenSetter } from '@/middleware'
 import { handleUnhandledRejection, handleUncaughtException } from '@/middleware/errorHandler'
 import routes from '@/routes'
 import { logger } from '@/utils'
@@ -92,6 +92,9 @@ if (process.env.NODE_ENV !== 'test') {
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+
+// CSRF Token 设置中间件（为认证用户设置CSRF Token）
+app.use(csrfTokenSetter)
 
 // 根路径 - 友好的状态页面
 app.get('/', statusPage)

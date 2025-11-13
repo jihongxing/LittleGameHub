@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import * as authController from '@/controllers/authController'
 import * as validation from '@/utils/validation'
-import { authenticate, rateLimiter } from '@/middleware'
+import { authenticate, rateLimiter, secureAuthRoute } from '@/middleware'
 import { validateBody } from '@/middleware/validation'
 import {
   RegisterDto,
@@ -28,10 +28,11 @@ router.post(
   authController.login
 )
 
-// 用户登出
+// 用户登出（需要 CSRF 保护）
 router.post(
   '/logout',
   authenticate,
+  ...secureAuthRoute, // 使用安全认证路由组合（包含 CSRF 保护）
   authController.logout
 )
 
@@ -80,18 +81,20 @@ router.get(
   authController.getCurrentUser
 )
 
-// 更新当前用户信息 - 使用新的 DTO 验证
+// 更新当前用户信息 - 使用新的 DTO 验证（需要 CSRF 保护）
 router.put(
   '/me',
   authenticate,
+  ...secureAuthRoute, // 使用安全认证路由组合
   validateBody(UpdateProfileDto),
   authController.updateCurrentUser
 )
 
-// 更改密码 - 使用新的 DTO 验证
+// 更改密码 - 使用新的 DTO 验证（需要 CSRF 保护）
 router.put(
   '/change-password',
   authenticate,
+  ...secureAuthRoute, // 使用安全认证路由组合
   validateBody(ChangePasswordDto),
   authController.changePassword
 )

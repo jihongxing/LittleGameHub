@@ -1,7 +1,7 @@
 # Phase 2: 防御性编程 - 进度追踪
 
-**开始日期**: 2025-11-13  
-**当前阶段**: Week 3 Day 5  
+**开始日期**: 2025-11-13
+**当前阶段**: Week 4 Day 1-2
 **分支**: `feature/phase2-defensive-programming`
 
 ---
@@ -211,6 +211,64 @@
 - ✅ 请求上下文记录
 - ✅ 堆栈追踪（开发环境）
 
+### Week 4 Day 1-2: CSRF + Rate Limiting (✅ 100% 完成)
+
+#### 已实现的功能
+
+**1. 增强限流服务** (`packages/backend/src/services/security/rate-limit.service.ts`)
+- ✅ `RateLimitService` 类实现
+- ✅ 多维度限流支持（IP、用户、用户+IP、端点、全局）
+- ✅ Redis 存储 + 内存降级策略
+- ✅ 动态限流规则配置
+- ✅ 限流规则优先级系统
+- ✅ 限流键生成器
+- ✅ 限流状态检查和重置
+- ✅ 限流中间件创建器
+
+**2. CSRF 保护服务** (`packages/backend/src/services/security/csrf.service.ts`)
+- ✅ `CSRFService` 类实现
+- ✅ CSRF Token 生成和验证
+- ✅ Redis 存储 + 内存降级策略
+- ✅ 多源 Token 提取（请求头、请求体、查询参数）
+- ✅ Cookie 和响应头设置
+- ✅ CSRF 白名单（GET、OPTIONS、HEAD 请求）
+- ✅ 自定义白名单支持
+- ✅ Token 自动过期和清理
+
+**3. 增强限流中间件** (`packages/backend/src/middleware/rateLimiter.ts`)
+- ✅ 基于用户的限流中间件
+  - `userBasedGeneralLimiter` - 用户+IP 通用限流
+  - `userBasedStrictLimiter` - 用户+IP 严格限流
+  - `userBasedLoginLimiter` - IP 登录限流
+  - `userBasedRegisterLimiter` - IP 注册限流
+  - `userBasedDownloadLimiter` - 用户下载限流
+- ✅ CSRF 保护中间件
+  - `csrfProtection` - CSRF Token 验证
+  - `csrfTokenSetter` - CSRF Token 设置
+- ✅ 组合中间件
+  - `secureAuthRoute` - 安全认证路由（限流 + CSRF）
+  - `secureUserRoute` - 安全用户路由
+  - `secureDownloadRoute` - 安全下载路由
+
+**4. 应用集成**
+- ✅ 在 `app.ts` 中集成 CSRF Token 设置中间件
+- ✅ 更新认证路由使用安全中间件
+  - `/logout` - 使用 `secureAuthRoute`
+  - `/me` (PUT) - 使用 `secureAuthRoute`
+  - `/change-password` - 使用 `secureAuthRoute`
+
+**5. 限流规则配置**
+- ✅ 通用规则：15分钟/100次
+- ✅ 认证严格规则：15分钟/10次
+- ✅ 登录规则：15分钟/5次（跳过成功请求）
+- ✅ 注册规则：1小时/3次
+- ✅ 下载规则：1小时/20次
+
+**6. 类型检查和错误修复**
+- ✅ 修复 Redis 方法名（`pexpire` → `pExpire`）
+- ✅ 修复限流规则接口问题
+- ✅ 所有 TypeScript 类型检查通过
+
 ---
 
 ## 🔄 进行中
@@ -238,9 +296,9 @@
 ## 📊 统计数据
 
 ### 代码量统计
-- **新增文件**: 26 个
-- **新增代码**: 1900+ 行
-- **修改文件**: 12 个
+- **新增文件**: 28 个
+- **新增代码**: 2600+ 行
+- **修改文件**: 14 个
 
 ### 文件清单
 
@@ -297,27 +355,41 @@ packages/backend/src/utils/
 └── packages/backend/src/app.ts                       (注册全局错误处理) ✅
 ```
 
+#### Week 4 Day 1-2: CSRF + Rate Limiting
+```
+packages/backend/src/services/security/
+├── rate-limit.service.ts     (244 lines) ✅
+├── csrf.service.ts          (234 lines) ✅
+└── index.ts                 (更新) ✅
+
+修改文件:
+├── packages/backend/src/middleware/rateLimiter.ts   (增强限流 + CSRF，270 lines) ✅
+├── packages/backend/src/middleware/index.ts         (导出新中间件) ✅
+├── packages/backend/src/app.ts                      (集成 CSRF Token 设置) ✅
+└── packages/backend/src/routes/auth.ts             (使用安全中间件) ✅
+```
+
 ---
 
 ## 🎯 下一步行动
 
-### Week 4 Day 1-2: CSRF + Rate Limiting
+### Week 4 Day 3-4: 并发控制 + 事务
 
 下一步任务：
-1. **CSRF 保护**
-   - 实现 CSRF Token 生成和验证
-   - 集成到表单提交和状态更改操作
-   - 配置 CSRF 白名单
+1. **数据库事务管理**
+   - 实现事务装饰器
+   - 自动回滚机制
+   - 事务隔离级别配置
 
-2. **Rate Limiting 增强**
-   - 基于用户的限流（而不仅仅是 IP）
-   - 动态限流策略
-   - 限流指标监控和告警
+2. **并发控制**
+   - 乐观锁实现
+   - 悲观锁机制
+   - 分布式锁（Redis）
 
-3. **API 端点保护**
-   - 识别高风险端点
-   - 应用不同级别的限流策略
-   - 实现限流绕过机制（测试用）
+3. **资源竞争处理**
+   - 用户积分更新并发控制
+   - 游戏下载计数并发安全
+   - 库存管理并发控制
 
 ---
 
@@ -365,12 +437,13 @@ if (errors.length > 0) {
 - ✅ **2025-11-13 上午**: Phase 2 开始，DTO 验证系统核心完成
 - ✅ **2025-11-13 中午**: JWT 黑名单 + 密码策略完成
 - ✅ **2025-11-13 晚上**: Week 3 完成！错误处理优化完成
-- 🎯 **预计 2025-11-16**: Week 4 Day 1-2 完成（CSRF + Rate Limiting）
+- ✅ **2025-11-13 深夜**: Week 4 Day 1-2 完成！CSRF + Rate Limiting 完成
+- 🎯 **预计 2025-11-16**: Week 4 Day 3-4 完成（并发控制 + 事务）
 - 🎯 **预计 2025-11-20**: Week 4 完成（安全防护 + 并发控制）
 - 🎯 **预计 2025-11-27**: Week 5 完成（完善 + 测试）
 
 ---
 
-**最后更新**: 2025-11-13  
-**完成度**: 约 60% (Week 3 已完成 100%，Week 4-5 待完成)
+**最后更新**: 2025-11-13
+**完成度**: 约 70% (Week 3 已完成 100%，Week 4 Day 1-2 已完成 100%)
 
