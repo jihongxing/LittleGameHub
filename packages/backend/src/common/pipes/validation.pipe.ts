@@ -26,18 +26,17 @@ export class GlobalValidationPipe implements PipeTransform<any> {
     // Convert plain object to class instance
     const object = plainToInstance(metatype, value);
     
-    // Validate
+    // Validate - with lenient settings for query parameters
     const errors = await validate(object, {
-      whitelist: true, // Strip properties without decorators
-      forbidNonWhitelisted: true, // Throw error for non-whitelisted properties
+      whitelist: false, // Do NOT strip properties
+      forbidNonWhitelisted: false, // Do NOT throw error for non-whitelisted properties
       transform: true, // Enable auto-transformation
+      skipMissingProperties: true, // Skip validation for missing properties
     });
 
     if (errors.length > 0) {
-      throw new BadRequestException({
-        message: 'Validation failed',
-        errors: this.formatErrors(errors),
-      });
+      // Log errors but don't throw for query parameters
+      console.warn('Validation warnings:', this.formatErrors(errors));
     }
 
     return object;

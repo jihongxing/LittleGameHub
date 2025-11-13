@@ -85,7 +85,11 @@ const GameDetail: React.FC = () => {
     try {
       setStartingSession(true);
       // Start game session
-      await startGameSession(game.id);
+      const sessionResponse = await startGameSession(game.id);
+      
+      // Save session ID to localStorage for GamePlayer component
+      localStorage.setItem(`game_session_${game.id}`, sessionResponse.session_id);
+      
       // Navigate to game player
       navigate(`/games/${game.id}/play`);
     } catch (err: any) {

@@ -11,7 +11,8 @@ export { FileCleanupService } from './services/file-cleanup.service';
 export { FileUploadController } from './controllers/file-upload.controller';
 
 // 中间件
-export { FileUploadMiddleware, createFileUploadMiddleware, uploadSingle, uploadMultiple, uploadFields } from './middleware/file-upload.middleware';
+export { FileUploadMiddleware } from './middleware/file-upload.middleware';
+// 注意：工厂函数 createFileUploadMiddleware, uploadSingle, uploadMultiple, uploadFields 不导出以避免 NestJS 依赖注入问题
 
 // 错误类
 export { FileUploadError } from './errors/file-upload-error';

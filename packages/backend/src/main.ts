@@ -21,7 +21,15 @@ import * as path from 'path'
 
 // Load environment variables from root directory FIRST
 // 首先从根目录加载环境变量
-dotenv.config({ path: path.resolve(__dirname, '../../.env') })
+const envPath = path.resolve(__dirname, '../../../.env')
+console.log(`📁 Loading .env from: ${envPath}`)
+const dotenvResult = dotenv.config({ path: envPath })
+if (dotenvResult.error) {
+  console.error(`❌ Failed to load .env file: ${dotenvResult.error.message}`)
+} else {
+  console.log(`✅ .env file loaded successfully`)
+  console.log(`   DB_PASSWORD in process.env: ${process.env.DB_PASSWORD ? '***' : '(not set)'}`)
+}
 
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
@@ -55,41 +63,52 @@ import { connectRedis } from './config/redis'
  * 7. 在配置的端口上启动服务器
  */
 async function bootstrap() {
-  // Create NestJS application instance
-  // 创建 NestJS 应用程序实例
-  const app = await NestFactory.create(AppModule)
+  try {
+    console.log('🚀 Starting NestJS application...')
+    const app = await NestFactory.create(AppModule)
+    console.log('✅ NestJS application created successfully')
   
-  // Configure global validation pipe for request validation
-  // 配置全局验证管道用于请求验证
-  app.useGlobalPipes(createValidationPipe())
+    // Configure global validation pipe for request validation
+    // 配置全局验证管道用于请求验证
+    app.useGlobalPipes(createValidationPipe())
   
-  // Set up global interceptors for logging and error handling
-  // 设置全局拦截器用于日志记录和错误处理
-  app.useGlobalInterceptors(new LoggingInterceptor(), new ErrorHandlerInterceptor())
+    // Set up global interceptors for logging and error handling
+    // 设置全局拦截器用于日志记录和错误处理
+    app.useGlobalInterceptors(new LoggingInterceptor(), new ErrorHandlerInterceptor())
   
-  // Enable CORS with configured origin and credentials
-  // 启用 CORS，配置允许的源和凭据
-  app.enableCors({ origin: env.CORS_ORIGIN, credentials: true })
+    // Enable CORS with configured origin and credentials
+    // 启用 CORS，配置允许的源和凭据
+    const corsOrigins = env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    app.enableCors({ 
+      origin: corsOrigins, 
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    })
   
-  // Set global API prefix for all routes
-  // 为所有路由设置全局 API 前缀
-  app.setGlobalPrefix(env.API_PREFIX)
+    // Set global API prefix for all routes
+    // 为所有路由设置全局 API 前缀
+    app.setGlobalPrefix(env.API_PREFIX)
   
-  // Initialize database connection
-  // 初始化数据库连接
-  await connectDatabase()
+    // Initialize database connection
+    // 初始化数据库连接
+    await connectDatabase()
   
-  // Initialize Redis connection
-  // 初始化 Redis 连接
-  await connectRedis()
+    // Initialize Redis connection
+    // 初始化 Redis 连接
+    await connectRedis()
   
-  // Start the server on the configured port
-  // 在配置的端口上启动服务器
-  await app.listen(env.PORT)
+    // Start the server on the configured port
+    // 在配置的端口上启动服务器
+    await app.listen(env.PORT)
   
-  console.log(`🚀 GameHub API Server is running on port ${env.PORT}`)
-  console.log(`🌍 Environment: ${env.NODE_ENV}`)
-  console.log(`📍 API Endpoint: http://localhost:${env.PORT}${env.API_PREFIX}`)
+    console.log(`🚀 GameHub API Server is running on port ${env.PORT}`)
+    console.log(`🌍 Environment: ${env.NODE_ENV}`)
+    console.log(`📍 API Endpoint: http://localhost:${env.PORT}${env.API_PREFIX}`)
+  } catch (error) {
+    console.error('❌ Error during bootstrap:', error)
+    throw error
+  }
 }
 
 /**

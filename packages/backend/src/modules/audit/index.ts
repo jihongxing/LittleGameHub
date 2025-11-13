@@ -13,7 +13,8 @@ export { AuditLogService } from './services/audit-log.service';
 export { AuditLogController } from './controllers/audit-log.controller';
 
 // 中间件
-export { AuditMiddleware, createAuditMiddleware } from './middleware/audit.middleware';
+export { AuditMiddleware } from './middleware/audit.middleware';
+// 注意：工厂函数 createAuditMiddleware 不导出以避免 NestJS 依赖注入问题
 
 // 模块
 export { AuditModule } from './audit.module';

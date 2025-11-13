@@ -10,7 +10,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { logger } from '@/utils/logger';
-import { DatabaseError } from '@/middleware';
+import { DatabaseError } from '../../../middleware';
 import { SECURITY_CONSTANTS } from '../config/file-upload-config';
 
 @Injectable()
@@ -227,7 +227,7 @@ export class FileCleanupService {
 
     } catch (error) {
       logger.error('Failed to get storage stats:', error as Error);
-      throw new DatabaseError('获取存储统计信息失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`获取存储统计信息失败: ${(error as Error).message}`);
     }
   }
 
@@ -296,7 +296,7 @@ export class FileCleanupService {
 
     } catch (error) {
       logger.error('Failed to cleanup directory:', error as Error);
-      throw new DatabaseError('目录清理失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`目录清理失败: ${(error as Error).message}`);
     }
   }
 

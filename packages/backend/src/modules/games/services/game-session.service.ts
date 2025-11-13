@@ -81,7 +81,11 @@ export class GameSessionService {
       userId,
       gameId,
       startTime: new Date(),
+      endTime: null,
+      durationSeconds: null,
+      pointsEarned: 0,
       completionStatus: GameSessionStatus.IN_PROGRESS,
+      gameState: null,
     });
 
     await this.sessionRepository.save(session);

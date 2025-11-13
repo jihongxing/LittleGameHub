@@ -18,10 +18,15 @@ import AchievementsPage from '@/pages/Profile/AchievementsPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import DownloadsPage from '@/pages/DownloadsPage'
 import ProfilePage from '@/pages/ProfilePage'
-import LoginPage from '@/pages/Auth/LoginPage'
-import RegisterPage from '@/pages/Auth/RegisterPage'
+import LoginPage from '@/pages/LoginPage'
+import TestAuthPage from '@/pages/TestAuthPage'
+import TestGamePlayPage from '@/pages/TestGamePlayPage'
+import TestPointsPage from '@/pages/TestPointsPage'
+import OAuthCallbackPage from '@/pages/Auth/OAuthCallbackPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import OfflineModeBanner from '@/components/OfflineModeBanner'
+import AggregatedGamesPage from '@/pages/AggregatedGamesPage'
+import AggregatedGameDetailPage from '@/pages/AggregatedGameDetailPage'
 
 const { Content } = Layout
 
@@ -48,12 +53,19 @@ const App: React.FC = () => {
             
             {/* 认证相关 */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/test-auth" element={<TestAuthPage />} />
+            <Route path="/test-game-play" element={<TestGamePlayPage />} />
+            <Route path="/test-points" element={<TestPointsPage />} />
+            <Route path="/auth/oauth/callback" element={<OAuthCallbackPage />} />
             
             {/* 游戏相关 */}
             <Route path="/games" element={<GameList />} />
             <Route path="/games/:id" element={<GameDetail />} />
             <Route path="/games/:id/play" element={<GamePlayer />} />
+            
+            {/* 聚合游戏 */}
+            <Route path="/aggregated-games" element={<AggregatedGamesPage />} />
+            <Route path="/aggregated-games/:gameId" element={<AggregatedGameDetailPage />} />
             
             {/* 用户相关 */}
             <Route path="/favorites" element={<FavoritesPage />} />

@@ -35,11 +35,17 @@ import { GameSession } from './entities/game-session.entity';
 import { GameService } from './services/game.service';
 import { GameSessionService } from './services/game-session.service';
 import { GamesController } from './controllers/games.controller';
+import { AuthModule } from '../auth/auth.module';
+import { GameAggregationService } from '../../services/gameAggregation.service';
+import { SyncGamesTask } from '../../tasks/syncGames.task';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Game, GameSession])],
+  imports: [
+    TypeOrmModule.forFeature([Game, GameSession]),
+    AuthModule, // 导入AuthModule以提供JwtService给JwtAuthGuard
+  ],
   controllers: [GamesController],
-  providers: [GameService, GameSessionService],
-  exports: [GameService, GameSessionService],
+  providers: [GameService, GameSessionService, GameAggregationService, SyncGamesTask],
+  exports: [GameService, GameSessionService, GameAggregationService, SyncGamesTask],
 })
 export class GamesModule {}

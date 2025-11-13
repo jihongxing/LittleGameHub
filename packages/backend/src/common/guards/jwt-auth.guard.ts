@@ -7,7 +7,8 @@
 
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { JwtService } from '../../modules/auth/services/jwt.service';
+import * as jwt from 'jsonwebtoken';
+import { env } from '../../config/env';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -17,20 +18,22 @@ export class JwtAuthGuard implements CanActivate {
     try {
       // Extract token from Authorization header
       const authHeader = request.headers.authorization;
-      const token = JwtService.extractTokenFromHeader(authHeader);
-
-      if (!token) {
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
         throw new UnauthorizedException('No token provided');
       }
 
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
       // Verify token
-      const payload = JwtService.verifyAccessToken(token);
+      const payload = jwt.verify(token, env.JWT_SECRET) as any;
 
       // Attach user info to request
       request.user = {
-        userId: payload.userId,
+        id: payload.id,
+        userId: payload.id, // 兼容性
         email: payload.email,
-        phone: payload.phone,
+        role: payload.role,
       };
 
       return true;
@@ -54,15 +57,17 @@ export class OptionalJwtAuthGuard implements CanActivate {
     
     try {
       const authHeader = request.headers.authorization;
-      const token = JwtService.extractTokenFromHeader(authHeader);
-
-      if (token) {
-        const payload = JwtService.verifyAccessToken(token);
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        const payload = jwt.verify(token, env.JWT_SECRET) as any;
         request.user = {
           userId: payload.userId,
           email: payload.email,
           phone: payload.phone,
         };
+      } else {
+        request.user = null;
       }
 
       return true;

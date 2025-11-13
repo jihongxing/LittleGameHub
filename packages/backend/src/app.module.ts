@@ -37,6 +37,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -53,6 +54,7 @@ import { OfflineModule } from './modules/offline/offline.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 // Configuration - 配置
 import { getTypeOrmConfig } from './config/database.config';
@@ -78,7 +80,6 @@ import { getTypeOrmConfig } from './config/database.config';
     // 在整个应用程序中提供环境变量和配置
     ConfigModule.forRoot({
       isGlobal: true,        // Make config available globally - 使配置全局可用
-      envFilePath: '.env',   // Environment file path - 环境文件路径
     }),
 
     // Database Module - 数据库模块
@@ -90,26 +91,25 @@ import { getTypeOrmConfig } from './config/database.config';
     // Each module handles a specific domain of the application
     // 每个模块处理应用程序的特定领域
 
+    AuthModule,               // Authentication and authorization - 认证和授权
     GamesModule,              // Game management - 游戏管理
     PointsModule,             // Points and rewards system - 积分和奖励系统
-    RewardsModule,            // Reward distribution - 奖励分发
-    MembershipModule,         // User membership tiers - 用户会员等级
-    InvitationsModule,        // User invitation system - 用户邀请系统
-    RecommendationsModule,    // Game recommendation engine - 游戏推荐引擎
-    SocialModule,             // Social features - 社交功能
-    CollectionsModule,        // Game collections - 游戏收藏
     OfflineModule,            // Offline game management - 离线游戏管理
     AchievementsModule,       // Achievement system - 成就系统
     AuditModule,              // Audit logging system - 审计日志系统
     FileUploadModule,         // Secure file upload system - 安全文件上传系统
+    RewardsModule,            // Rewards system - 奖励系统
+    MembershipModule,         // Membership system - 会员系统
+    InvitationsModule,        // Invitations system - 邀请系统
+    RecommendationsModule,    // Recommendations system - 推荐系统
+    CollectionsModule,        // Collections system - 收藏系统
+    SocialModule,             // Social features - 社交功能
 
     // TODO: Add more feature modules here
     // 待办：在此处添加更多功能模块
-    // AuthModule,            // Authentication and authorization - 认证和授权
     // UsersModule,           // User management - 用户管理
     // NotificationsModule,   // Push notifications - 推送通知
     // AnalyticsModule,       // Analytics and tracking - 分析和跟踪
-    // FileUploadModule,      // File upload handling - 文件上传处理
   ],
 
   // Root Controllers - 根控制器
@@ -123,4 +123,3 @@ import { getTypeOrmConfig } from './config/database.config';
   providers: [AppService],
 })
 export class AppModule {}
-

@@ -69,7 +69,7 @@ export const getPointTransactions = async (options?: {
   if (options?.limit) params.append('limit', String(options.limit));
 
   const response = await apiClient.get(`/points/transactions?${params.toString()}`);
-  return response.data;
+  return response;
 };
 
 /**
@@ -77,7 +77,7 @@ export const getPointTransactions = async (options?: {
  */
 export const getPointTasks = async (): Promise<{ tasks: PointTask[] }> => {
   const response = await apiClient.get('/points/tasks');
-  return response.data;
+  return response;
 };
 
 /**

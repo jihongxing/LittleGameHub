@@ -26,12 +26,8 @@
  * @since 2024-01-01
  */
 
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-// Load environment variables from root directory
-// 从根目录加载环境变量
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+// NOTE: .env is loaded in app.ts before this module is imported //已经从express迁移到nextjs，app.ts文件已经删除
+// Do not load .env here to avoid duplicate loading and import order issues
 
 /**
  * Environment configuration interface
@@ -84,9 +80,15 @@ export interface EnvConfig {
  * Get environment variable with type conversion
  */
 function getEnv(key: string, defaultValue?: string): string {
-  const value = process.env[key] || defaultValue;
+  const value = process.env[key] !== undefined ? process.env[key] : defaultValue;
   if (value === undefined) {
+    console.error(`❌ Environment variable ${key} is required but not set`);
+    console.error(`   Available keys: ${Object.keys(process.env).filter(k => k.startsWith('DB_')).join(', ')}`);
     throw new Error(`Environment variable ${key} is required but not set`);
+  }
+  // 调试：打印密码相关的环境变量
+  if (key === 'DB_PASSWORD') {
+    console.log(`✅ DB_PASSWORD loaded: ${value ? '***' : '(empty)'}`);
   }
   return value;
 }
@@ -137,13 +139,13 @@ export const env: EnvConfig = {
   // Redis
   REDIS_HOST: getEnv('REDIS_HOST', 'localhost'),
   REDIS_PORT: getEnvNumber('REDIS_PORT', 6379),
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+  REDIS_PASSWORD: getEnv('REDIS_PASSWORD', '123456'),
   REDIS_DB: getEnvNumber('REDIS_DB', 0),
 
   // JWT
-  JWT_SECRET: getEnv('JWT_SECRET', ''),
+  JWT_SECRET: getEnv('JWT_SECRET', 'dev-secret-key-change-in-production'),
   JWT_EXPIRES_IN: getEnv('JWT_EXPIRES_IN', '1h'),
-  JWT_REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET', ''),
+  JWT_REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET', 'dev-refresh-secret-key-change-in-production'),
   JWT_REFRESH_EXPIRES_IN: getEnv('JWT_REFRESH_EXPIRES_IN', '7d'),
 
   // CORS
@@ -168,20 +170,30 @@ export const env: EnvConfig = {
  * Validate required environment variables
  */
 export function validateEnv(): void {
-  const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET'];
-  const missing: string[] = [];
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Only enforce strict validation in production
+  if (isProduction) {
+    const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DB_PASSWORD'];
+    const missing: string[] = [];
 
-  for (const key of required) {
-    if (!process.env[key]) {
-      missing.push(key);
+    for (const key of required) {
+      if (!process.env[key]) {
+        missing.push(key);
+      }
     }
-  }
 
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(', ')}\n` +
-        'Please check your .env file.'
-    );
+    if (missing.length > 0) {
+      throw new Error(
+        `Missing required environment variables in production: ${missing.join(', ')}\n` +
+          'Please check your .env file.'
+      );
+    }
+  } else {
+    // In development, just warn if JWT secrets are using defaults
+    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+      console.warn('⚠️  WARNING: Using default JWT secrets in development. Set JWT_SECRET and JWT_REFRESH_SECRET in .env for production.');
+    }
   }
 }
 

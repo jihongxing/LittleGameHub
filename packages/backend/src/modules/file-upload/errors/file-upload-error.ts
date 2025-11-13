@@ -5,14 +5,14 @@
  * 自定义文件上传相关的错误类型
  * Custom error types for file upload operations
  */
-import { AppError } from '@/middleware/errorHandler';
+import { AppError } from '../../../middleware/errorHandler';
 
 export class FileUploadError extends AppError {
   public readonly uploadErrorCode: string;
   private _metadata?: any;
 
-  constructor(message: string, errorCode: string, originalError?: any, metadata?: any) {
-    super(message, 400, FileUploadError.getErrorType(errorCode), originalError);
+  constructor(message: string, errorCode: string, statusCode: number = 400, originalError?: any, metadata?: any) {
+    super(message, statusCode, true);
     this.uploadErrorCode = errorCode;
     this._metadata = metadata;
     this.name = 'FileUploadError';
@@ -93,9 +93,8 @@ export class FileUploadError extends AppError {
    */
   static fileTooLarge(actualSize: number, maxSize: number): FileUploadError {
     const message = `文件过大: ${this.formatBytes(actualSize)}, 最大允许: ${this.formatBytes(maxSize)}`;
-    const error = new FileUploadError(message, 'FILE_TOO_LARGE');
-    error.statusCode = this.getHttpStatus('FILE_TOO_LARGE');
-    return error;
+    const statusCode = this.getHttpStatus('FILE_TOO_LARGE');
+    return new FileUploadError(message, 'FILE_TOO_LARGE', statusCode);
   }
 
   /**
@@ -113,9 +112,8 @@ export class FileUploadError extends AppError {
    */
   static securityThreat(threat: string): FileUploadError {
     const message = `检测到安全威胁: ${threat}`;
-    const error = new FileUploadError(message, 'SECURITY_THREAT');
-    error.statusCode = this.getHttpStatus('SECURITY_THREAT');
-    return error;
+    const statusCode = this.getHttpStatus('SECURITY_THREAT');
+    return new FileUploadError(message, 'SECURITY_THREAT', statusCode);
   }
 
   /**
@@ -133,9 +131,7 @@ export class FileUploadError extends AppError {
    */
   static storageFailed(reason: string): FileUploadError {
     const message = `文件存储失败: ${reason}`;
-    const error = new FileUploadError(message, 'STORAGE_FAILED');
-    error.statusCode = 500;
-    return error;
+    return new FileUploadError(message, 'STORAGE_FAILED', 500);
   }
 
   /**

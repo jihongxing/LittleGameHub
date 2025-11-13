@@ -38,7 +38,7 @@ export const getRecommendations = async (options?: {
   }
 
   const response = await apiClient.get(`/recommendations?${params.toString()}`);
-  return response.data;
+  return response;
 };
 
 /**
@@ -49,7 +49,7 @@ export const getScenarios = async (): Promise<{
   current_scenario: string;
 }> => {
   const response = await apiClient.get('/recommendations/scenarios');
-  return response.data;
+  return response;
 };
 
 /**
@@ -74,7 +74,7 @@ export const getScenarioRecommendations = async (
   const response = await apiClient.get(
     `/recommendations/scenario/${scenario}?${params.toString()}`
   );
-  return response.data;
+  return response;
 };
 
 /**

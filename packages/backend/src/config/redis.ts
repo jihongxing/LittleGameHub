@@ -1,5 +1,6 @@
 import { createClient, RedisClientType } from 'redis'
 import { logger } from '@/utils/logger'
+import { env } from './env'
 
 let redisClient: RedisClientType
 
@@ -8,12 +9,19 @@ let redisClient: RedisClientType
  */
 export async function connectRedis(): Promise<RedisClientType> {
   try {
+    console.log('🔍 Redis connection config:', {
+      host: env.REDIS_HOST,
+      port: env.REDIS_PORT,
+      portType: typeof env.REDIS_PORT,
+      password: env.REDIS_PASSWORD ? '***SET***' : 'NOT SET',
+    });
+    
     redisClient = createClient({
       socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379')
+        host: env.REDIS_HOST,
+        port: Number(env.REDIS_PORT)
       },
-      password: process.env.REDIS_PASSWORD || undefined
+      password: env.REDIS_PASSWORD || undefined
     })
 
     redisClient.on('error', (err) => {
@@ -21,7 +29,7 @@ export async function connectRedis(): Promise<RedisClientType> {
     })
 
     redisClient.on('connect', () => {
-      logger.info('Redis连接成功')
+      logger.info('Redis连接成功，密码值：' + (env.REDIS_PASSWORD ? '已设置' : '未设置'))
     })
 
     await redisClient.connect()

@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Checkbox, Card, Typography, message, Divider, Space } from 'antd'
-import { UserOutlined, LockOutlined, GithubOutlined, GoogleOutlined, WechatOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Helmet } from 'react-helmet-async'
+import { OAuthLoginPanel } from '../../components/auth/OAuthLoginPanel'
+import { useOAuth } from '../../hooks/useOAuth'
+import { OAuthProvider } from '../../components/auth/OAuthLoginButton'
 
 const { Title, Text } = Typography
 
@@ -13,14 +16,15 @@ const { Title, Text } = Typography
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const { loginWithOAuth, loading: oauthLoading } = useOAuth()
 
   const onFinish = async (values: any) => {
     try {
       setLoading(true)
-      // TODO: 实现登录逻辑
+      // TODO: 实现传统登录逻辑
       console.log('登录信息:', values)
       message.success('登录功能开发中，敬请期待！')
-      
+
       // 暂时跳转到首页
       // navigate('/')
     } catch (error) {
@@ -30,9 +34,23 @@ const LoginPage: React.FC = () => {
     }
   }
 
-  const handleThirdPartyLogin = (provider: string) => {
-    // TODO: 实现第三方登录
-    message.info(`${provider} 登录功能开发中，敬请期待！`)
+  const handleOAuthLogin = async (provider: OAuthProvider) => {
+    // 只处理当前支持的提供商
+    const supportedProviders: OAuthProvider[] = ['github', 'google', 'wechat', 'qq'];
+    if (!supportedProviders.includes(provider)) {
+      message.warning(`暂不支持 ${provider} 登录方式`);
+      return;
+    }
+    try {
+      await loginWithOAuth(provider)
+    } catch (error) {
+      message.error('OAuth登录启动失败，请重试')
+    }
+  }
+
+  const handleTraditionalLogin = () => {
+    // 滚动到传统登录表单（如果需要）
+    // 目前传统登录表单就在上方，所以不需要额外操作
   }
 
   return (
@@ -111,36 +129,12 @@ const LoginPage: React.FC = () => {
             </div>
           </Form>
 
-          <Divider plain>
-            <Text type="secondary">或使用第三方登录</Text>
-          </Divider>
-
-          <Space direction="vertical" size="middle" className="w-full">
-            <Button
-              icon={<WechatOutlined />}
-              block
-              size="large"
-              onClick={() => handleThirdPartyLogin('微信')}
-            >
-              微信登录
-            </Button>
-            <Button
-              icon={<GithubOutlined />}
-              block
-              size="large"
-              onClick={() => handleThirdPartyLogin('GitHub')}
-            >
-              GitHub 登录
-            </Button>
-            <Button
-              icon={<GoogleOutlined />}
-              block
-              size="large"
-              onClick={() => handleThirdPartyLogin('Google')}
-            >
-              Google 登录
-            </Button>
-          </Space>
+          <OAuthLoginPanel
+            providers={['github', 'google', 'wechat']}
+            onLogin={handleOAuthLogin}
+            onTraditionalLogin={handleTraditionalLogin}
+            loading={oauthLoading}
+          />
 
           <div className="mt-6 text-center">
             <Text type="secondary" className="text-xs">

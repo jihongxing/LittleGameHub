@@ -75,6 +75,10 @@ const GameList: React.FC = () => {
         status: 'active',
       });
 
+      if (!response || !response.games || !response.pagination) {
+        throw new Error('Invalid response structure');
+      }
+
       setGames(response.games);
       setTotal(response.pagination.total);
     } catch (err: any) {

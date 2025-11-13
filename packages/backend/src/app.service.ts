@@ -24,6 +24,9 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { getRedisClient } from './config/redis';
 
 /**
  * Root Application Service
@@ -37,6 +40,10 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class AppService {
+  constructor(
+    @InjectDataSource()
+    private dataSource: DataSource
+  ) {}
   /**
    * Get application welcome message
    * 获取应用程序欢迎消息
@@ -54,8 +61,29 @@ export class AppService {
    * const message = appService.getHello();
    * // Returns: "GameHub API - NestJS Application"
    */
-  getHello(): string {
-    return 'GameHub API - NestJS Application';
+  async getHello(): Promise<any> {
+    const startTime = new Date();
+    const uptime = process.uptime();
+    
+    // 检查各个服务状态
+    const services = await this.checkServicesStatus();
+    
+    return {
+      title: '🎮 GameHub API Server',
+      version: '1.0.0',
+      framework: 'NestJS',
+      environment: process.env.NODE_ENV || 'development',
+      startTime: startTime.toISOString(),
+      uptime: `${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s`,
+      status: 'running',
+      services,
+      endpoints: {
+        api: '/api',
+        health: '/api/health',
+        docs: '/api/docs (coming soon)'
+      },
+      message: '✅ All systems operational'
+    };
   }
 
   /**
@@ -90,10 +118,93 @@ export class AppService {
    * //   timestamp: '2024-01-01T12:00:00.000Z'
    * // }
    */
-  getHealth(): { status: string; timestamp: string } {
+  async getHealth(): Promise<{ status: string; timestamp: string; services: any }> {
+    const services = await this.checkServicesStatus();
+    const allHealthy = Object.values(services).every(service => (service as any).status === 'connected');
+    
     return {
-      status: 'ok',
+      status: allHealthy ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
+      services
+    };
+  }
+
+  /**
+   * 检查各个服务的状态
+   * Check status of all services
+   */
+  private async checkServicesStatus() {
+    const services = {
+      database: await this.checkDatabaseStatus(),
+      redis: await this.checkRedisStatus(),
+      modules: this.getModulesStatus()
+    };
+
+    return services;
+  }
+
+  /**
+   * 检查数据库连接状态
+   * Check database connection status
+   */
+  private async checkDatabaseStatus() {
+    try {
+      await this.dataSource.query('SELECT 1');
+      return {
+        status: 'connected',
+        type: 'PostgreSQL',
+        message: '数据库连接正常'
+      };
+    } catch (error) {
+      return {
+        status: 'disconnected',
+        type: 'PostgreSQL',
+        message: '数据库连接失败',
+        error: (error as Error).message
+      };
+    }
+  }
+
+  /**
+   * 检查Redis连接状态
+   * Check Redis connection status
+   */
+  private async checkRedisStatus() {
+    try {
+      const redis = getRedisClient();
+      await redis.ping();
+      return {
+        status: 'connected',
+        type: 'Redis',
+        message: 'Redis连接正常'
+      };
+    } catch (error) {
+      return {
+        status: 'disconnected',
+        type: 'Redis',
+        message: 'Redis连接失败',
+        error: (error as Error).message
+      };
+    }
+  }
+
+  /**
+   * 获取模块状态
+   * Get modules status
+   */
+  private getModulesStatus() {
+    const modules = [
+      'AuthModule', 'GamesModule', 'PointsModule', 'OfflineModule',
+      'AchievementsModule', 'AuditModule', 'FileUploadModule',
+      'RewardsModule', 'MembershipModule', 'InvitationsModule',
+      'RecommendationsModule', 'CollectionsModule', 'SocialModule'
+    ];
+
+    return {
+      status: 'loaded',
+      count: modules.length,
+      modules: modules,
+      message: `${modules.length}个模块已加载`
     };
   }
 }

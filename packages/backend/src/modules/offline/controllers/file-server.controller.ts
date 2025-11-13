@@ -6,7 +6,7 @@
 import { Controller, Get, Param, Res, UseGuards, Req } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { FileServerService } from '../services/file-server.service';
-// import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'; // Uncomment when auth is ready
+// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard'; // Uncomment when auth is ready
 
 @Controller('offline/files')
 // @UseGuards(JwtAuthGuard) // Uncomment when auth is ready

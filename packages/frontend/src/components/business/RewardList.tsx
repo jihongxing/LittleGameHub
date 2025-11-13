@@ -34,10 +34,11 @@ const RewardList: React.FC<RewardListProps> = ({ currentBalance, onRedeemSuccess
     try {
       setLoading(true);
       const data = await getRewards();
-      setRewards(data.rewards);
+      setRewards(data?.rewards || []);
     } catch (err: any) {
       console.error('Failed to fetch rewards:', err);
       message.error('加载奖励失败');
+      setRewards([]);
     } finally {
       setLoading(false);
     }

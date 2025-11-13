@@ -6,18 +6,18 @@
  * Provides audit log recording, querying, and management functionality
  */
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource, SelectQueryBuilder } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { AuditLog, AuditEventType, AuditSeverity, AuditStatus, AuditLogQuery, AuditLogStats } from '../entities/audit-log.entity';
-import { logger } from '@/utils/logger';
-import { DatabaseError } from '@/middleware';
+import { logger } from '../../../utils/logger';
+import { DatabaseError } from '../../../middleware/errorHandler';
 
 @Injectable()
 export class AuditLogService {
-  private auditLogRepository: Repository<AuditLog>;
-
-  constructor(private dataSource: DataSource) {
-    this.auditLogRepository = this.dataSource.getRepository(AuditLog);
-  }
+  constructor(
+    @InjectRepository(AuditLog)
+    private auditLogRepository: Repository<AuditLog>
+  ) {}
 
   /**
    * 记录审计事件
@@ -207,7 +207,7 @@ export class AuditLogService {
       return { logs, total };
     } catch (error) {
       logger.error('Failed to query audit logs:', error as Error);
-      throw new DatabaseError('查询审计日志失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`查询审计日志失败: ${(error as Error).message}`);
     }
   }
 
@@ -258,7 +258,7 @@ export class AuditLogService {
       };
     } catch (error) {
       logger.error('Failed to get audit stats:', error as Error);
-      throw new DatabaseError('获取审计统计信息失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`获取审计统计信息失败: ${(error as Error).message}`);
     }
   }
 
@@ -282,7 +282,7 @@ export class AuditLogService {
       return result.affected || 0;
     } catch (error) {
       logger.error('Failed to delete old audit logs:', error as Error);
-      throw new DatabaseError('删除旧审计日志失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`删除旧审计日志失败: ${(error as Error).message}`);
     }
   }
 
@@ -301,7 +301,7 @@ export class AuditLogService {
       }
     } catch (error) {
       logger.error('Failed to export audit logs:', error as Error);
-      throw new DatabaseError('导出审计日志失败', { originalError: (error as Error).message });
+      throw new DatabaseError(`导出审计日志失败: ${(error as Error).message}`);
     }
   }
 

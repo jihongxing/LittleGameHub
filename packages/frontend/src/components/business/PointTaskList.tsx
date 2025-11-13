@@ -38,10 +38,11 @@ const PointTaskList: React.FC<PointTaskListProps> = ({ onTaskComplete }) => {
     try {
       setLoading(true);
       const data = await getPointTasks();
-      setTasks(data.tasks);
+      setTasks(data?.tasks || []);
     } catch (err: any) {
       console.error('Failed to fetch tasks:', err);
       message.error('加载任务失败');
+      setTasks([]);
     } finally {
       setLoading(false);
     }

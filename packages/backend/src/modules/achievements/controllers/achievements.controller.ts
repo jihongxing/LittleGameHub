@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { AchievementService } from '../services/achievement.service';
 import { AchievementDetectorService } from '../services/achievement-detector.service';
-// import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'; // Uncomment when auth is ready
+// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard'; // Uncomment when auth is ready
 // import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
 @Controller('achievements')

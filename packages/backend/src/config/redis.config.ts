@@ -28,9 +28,20 @@ export const redisConfig = {
       return Math.min(retries * 100, 3000);
     },
   },
-  password: env.REDIS_PASSWORD,
+  // Use password for Redis authentication (requirepass)
+  password: env.REDIS_PASSWORD || undefined,
   database: env.REDIS_DB,
 };
+
+// Debug: Log Redis configuration
+console.log('🔍 Redis Config:', {
+  host: env.REDIS_HOST,
+  port: env.REDIS_PORT,
+  password: env.REDIS_PASSWORD ? '***SET***' : 'NOT SET',
+  database: env.REDIS_DB,
+  passwordType: typeof env.REDIS_PASSWORD,
+  hasPassword: !!env.REDIS_PASSWORD,
+});
 
 /**
  * Initialize Redis connection
@@ -64,6 +75,8 @@ export async function initializeRedis(): Promise<RedisClientType> {
     return redisClient;
   } catch (error) {
     console.error('❌ Redis connection failed:', error);
+    console.error('⚠️  CRITICAL: Redis service must be running!');
+    console.error('Please ensure Redis is started before running the application.');
     throw error;
   }
 }

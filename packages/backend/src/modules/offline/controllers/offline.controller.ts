@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common';
 import { OfflineGameService } from '../services/offline-game.service';
 import { StorageQuotaService } from '../services/storage-quota.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @Controller('offline')
 @UseGuards(JwtAuthGuard)

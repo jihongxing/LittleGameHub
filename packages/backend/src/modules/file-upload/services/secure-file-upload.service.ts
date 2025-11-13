@@ -9,9 +9,9 @@ import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import sharp from 'sharp';
+const Jimp = require('jimp');
 import { logger } from '@/utils/logger';
-import { DatabaseError } from '@/middleware';
+import { DatabaseError } from '../../../middleware';
 import { FileUploadError } from '../errors/file-upload-error';
 
 export interface FileUploadConfig {
@@ -154,7 +154,7 @@ export class SecureFileUploadService {
       }
 
       logger.error('File upload failed:', error as Error);
-      throw error instanceof FileUploadError ? error : new DatabaseError('文件上传失败', { originalError: (error as Error).message });
+      throw error instanceof FileUploadError ? error : new DatabaseError(`文件上传失败: ${(error as Error).message}`);
     }
   }
 
@@ -384,6 +384,60 @@ export class SecureFileUploadService {
     config: FileUploadConfig
   ): Promise<{ path: string; size: number }> {
     try {
+      // 使用 jimp 进行图片处理
+      const image = await Jimp.read(sourcePath);
+      
+      // 获取原始尺寸
+      const originalWidth = image.getWidth();
+      const originalHeight = image.getHeight();
+      
+      // 调整尺寸（如果需要）
+      if (config.maxWidth || config.maxHeight) {
+        const maxWidth = config.maxWidth || originalWidth;
+        const maxHeight = config.maxHeight || originalHeight;
+        
+        // 保持宽高比缩放
+        image.scaleToFit(maxWidth, maxHeight);
+      }
+      
+      // 设置质量和格式
+      const ext = path.extname(targetPath).toLowerCase();
+      const quality = config.quality || 85;
+      
+      switch (ext) {
+        case '.jpg':
+        case '.jpeg':
+          image.quality(quality);
+          break;
+        case '.png':
+          // PNG 不支持质量设置，但可以进行无损压缩
+          break;
+        default:
+          // 对于其他格式，保持原样
+          break;
+      }
+      
+      // 保存处理后的图片
+      await image.writeAsync(targetPath);
+      const stats = await fs.stat(targetPath);
+      
+      logger.debug('Image optimized with jimp', {
+        originalSize: `${originalWidth}x${originalHeight}`,
+        newSize: `${image.getWidth()}x${image.getHeight()}`,
+        fileSize: stats.size,
+      });
+      
+      return { path: targetPath, size: stats.size };
+    } catch (error) {
+      logger.warn('Image optimization failed, copying original:', error as Error);
+      // 优化失败时复制原始文件
+      await fs.copyFile(sourcePath, targetPath);
+      const stats = await fs.stat(targetPath);
+      return { path: targetPath, size: stats.size };
+    }
+    
+    /* 原始 sharp 代码 - 已替换为 jimp
+    try {
       let pipeline = sharp(sourcePath);
 
       // 获取原始尺寸
@@ -432,6 +486,7 @@ export class SecureFileUploadService {
       const stats = await fs.stat(targetPath);
       return { path: targetPath, size: stats.size };
     }
+    */
   }
 
   /**
@@ -439,6 +494,19 @@ export class SecureFileUploadService {
    * Extract image metadata
    */
   private async extractImageMetadata(file: { path: string }): Promise<{ width?: number; height?: number }> {
+    try {
+      // 使用 jimp 提取图片元数据
+      const image = await Jimp.read(file.path);
+      return {
+        width: image.getWidth(),
+        height: image.getHeight(),
+      };
+    } catch (error) {
+      logger.warn('Failed to extract image metadata with jimp:', error as Error);
+      return { width: undefined, height: undefined };
+    }
+    
+    /* 原始 sharp 代码 - 已替换为 jimp
     try {
       const metadata = await sharp(file.path).metadata();
       return {
@@ -449,6 +517,7 @@ export class SecureFileUploadService {
       logger.warn('Failed to extract image metadata:', error as Error);
       return {};
     }
+    */
   }
 
   /**

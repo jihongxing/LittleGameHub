@@ -7,7 +7,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Game } from '../../games/entities/game.entity';
+import { Game, GameAvailabilityStatus } from '../../games/entities/game.entity';
 import { RecommendationScenario } from '../entities/recommendation.entity';
 
 export interface ScenarioConfig {
@@ -26,26 +26,59 @@ export class ScenarioRecommendationService {
     {
       scenario: RecommendationScenario.COMMUTE,
       maxDuration: 900, // 15 minutes
-      categories: ['休闲', '益智', '解谜', '快节奏'],
+      categories: [
+        // 中文分类
+        '休闲', '益智', '解谜', '快节奏',
+        // 英文分类
+        'Casual', 'Puzzle', 'Arcade', 'Quick', 'Fast-Paced', 'Short', 'Mobile'
+      ],
       description: '通勤时间适合快节奏、轻松的游戏',
     },
     {
       scenario: RecommendationScenario.BREAK_TIME,
       maxDuration: 600, // 10 minutes
-      categories: ['休闲', '益智', '街机'],
+      categories: [
+        // 中文分类
+        '休闲', '益智', '街机',
+        // 英文分类
+        'Casual', 'Puzzle', 'Arcade', 'Relaxing', 'Simple', 'Quick'
+      ],
       description: '休息时间适合轻松休闲的游戏',
     },
     {
       scenario: RecommendationScenario.BEDTIME,
       maxDuration: 1800, // 30 minutes
-      categories: ['休闲', '放松', '解谜', '冒险'],
+      categories: [
+        // 中文分类
+        '休闲', '放松', '解谜', '冒险',
+        // 英文分类
+        'Relaxing', 'Atmospheric', 'Calm', 'Peaceful', 'Adventure', 'Story', 'Singleplayer'
+      ],
       description: '睡前适合放松、舒缓的游戏',
     },
     {
       scenario: RecommendationScenario.WEEKEND,
       maxDuration: 7200, // 2 hours
-      categories: ['冒险', '角色扮演', '策略', '竞技'],
+      categories: [
+        // 中文分类
+        '冒险', '角色扮演', '策略', '竞技',
+        // 英文分类
+        'Adventure', 'RPG', 'Strategy', 'Open World', 'Story Rich', 'Immersive', 'Complex'
+      ],
       description: '周末适合深度体验的游戏',
+    },
+    {
+      scenario: RecommendationScenario.ANY,
+      maxDuration: 3600, // 1 hour
+      categories: [
+        // 中文分类
+        '休闲', '益智', '动作', '冒险', '策略', '模拟', '体育', '竞速',
+        // 英文分类
+        'Action', 'Adventure', 'Puzzle', 'Strategy', 'Simulation', 'Sports', 'Racing', 'Casual',
+        'RPG', 'Singleplayer', 'Atmospheric', 'Open World', 'First-Person', 'Third-Person',
+        'Arcade', 'Platformer', 'Shooter', 'Fighting', 'Horror', 'Survival'
+      ],
+      description: '适合任何时间的游戏',
     },
   ];
 
@@ -76,7 +109,7 @@ export class ScenarioRecommendationService {
     // Find games matching scenario criteria
     const games = await this.gameRepository
       .createQueryBuilder('game')
-      .where('game.availability_status = :status', { status: 'available' })
+      .where('game.availability_status = :status', { status: GameAvailabilityStatus.ACTIVE })
       .andWhere('game.min_play_duration_seconds <= :maxDuration', {
         maxDuration: config.maxDuration,
       })
@@ -98,7 +131,7 @@ export class ScenarioRecommendationService {
           reason: this.generateScenarioReason(game, config),
         };
       })
-      .filter((r) => r.score > 30) // Only return games with decent fit
+      .filter((r) => r.score > 20) // Only return games with decent fit
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
 
@@ -124,16 +157,42 @@ export class ScenarioRecommendationService {
     // Category match (30 points max)
     const gameTags = game.categoryTags || [];
     const matchingCategories = gameTags.filter((tag) =>
-      config.categories.some((cat) => tag.includes(cat) || cat.includes(tag)),
+      config.categories.some((cat) => {
+        const tagLower = tag.toLowerCase();
+        const catLower = cat.toLowerCase();
+        // 精确匹配或包含匹配
+        return tagLower === catLower || 
+               tagLower.includes(catLower) || 
+               catLower.includes(tagLower);
+      }),
     );
-    score += (matchingCategories.length / Math.max(config.categories.length, 1)) * 30;
+    
+    // 计算分类匹配分数
+    if (matchingCategories.length === 0) {
+      score += 5; // 新游戏基础分数
+    } else {
+      // 根据匹配数量给分，最多30分
+      const matchRatio = Math.min(matchingCategories.length / 3, 1); // 最多3个匹配就给满分
+      score += matchRatio * 30;
+      
+      // 记录匹配的分类用于调试
+      this.logger.debug(`Game "${game.title}" matched categories: ${matchingCategories.join(', ')}`);
+    }
 
-    // Rating bonus (20 points max)
-    score += ((game.averageRating || 0) / 5) * 20;
+    // Rating bonus (20 points max) - 如果没有评分，给新游戏一些基础分数
+    if (game.averageRating && game.averageRating > 0) {
+      score += (game.averageRating / 5) * 20;
+    } else {
+      score += 10; // 新游戏基础评分分数
+    }
 
-    // Popularity bonus (20 points max)
-    const popularityScore = Math.min((game.playCount / 1000) * 20, 20);
-    score += popularityScore;
+    // Popularity bonus (20 points max) - 如果没有游玩次数，给新游戏一些基础分数
+    if (game.playCount > 0) {
+      const popularityScore = Math.min((game.playCount / 1000) * 20, 20);
+      score += popularityScore;
+    } else {
+      score += 5; // 新游戏基础热度分数
+    }
 
     return Math.min(score, 100);
   }

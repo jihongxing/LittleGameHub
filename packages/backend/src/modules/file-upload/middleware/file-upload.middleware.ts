@@ -289,22 +289,21 @@ export class FileUploadMiddleware implements NestMiddleware {
     if (err instanceof FileUploadError) {
       error = err;
     } else if (err.code === 'LIMIT_FILE_SIZE') {
-      error = FileUploadError.fileTooLarge(err.size || 0, err.limit || 0);
+      const statusCode = FileUploadError.getHttpStatus('FILE_TOO_LARGE');
+      error = new FileUploadError('文件过大', 'FILE_TOO_LARGE', statusCode);
     } else if (err.code === 'LIMIT_FILE_COUNT') {
-      error = new FileUploadError('文件数量超过限制', 'TOO_MANY_FILES');
-    } else if (err.code === 'LIMIT_FIELD_KEY') {
-      error = new FileUploadError('字段名过长', 'FIELD_NAME_TOO_LONG');
-    } else if (err.code === 'LIMIT_FIELD_VALUE') {
-      error = new FileUploadError('字段值过大', 'FIELD_VALUE_TOO_LARGE');
+      const statusCode = FileUploadError.getHttpStatus('TOO_MANY_FILES');
+      error = new FileUploadError('文件数量过多', 'TOO_MANY_FILES', statusCode);
     } else if (err.code === 'LIMIT_FIELD_COUNT') {
-      error = new FileUploadError('字段数量过多', 'TOO_MANY_FIELDS');
+      const statusCode = FileUploadError.getHttpStatus('TOO_MANY_FIELDS');
+      error = new FileUploadError('字段数量过多', 'TOO_MANY_FIELDS', statusCode);
     } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-      error = new FileUploadError('意外的文件字段', 'UNEXPECTED_FILE');
+      const statusCode = FileUploadError.getHttpStatus('UNEXPECTED_FILE');
+      error = new FileUploadError('意外的文件字段', 'UNEXPECTED_FILE', statusCode);
     } else {
-      error = new FileUploadError(`文件上传失败: ${err.message}`, 'UPLOAD_FAILED');
+      const statusCode = FileUploadError.getHttpStatus('UPLOAD_FAILED');
+      error = new FileUploadError(`文件上传失败: ${err.message}`, 'UPLOAD_FAILED', statusCode);
     }
-
-    error.statusCode = FileUploadError.getHttpStatus(error.uploadErrorCode);
 
     logger.warn('Multer error during file upload:', {
       error: error.message,

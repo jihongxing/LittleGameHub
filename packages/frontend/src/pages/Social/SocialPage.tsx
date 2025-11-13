@@ -30,7 +30,7 @@ import {
   subscribeFriends,
   type NotificationPayload,
 } from '@/services/websocket/client';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 const { TabPane } = Tabs;
 

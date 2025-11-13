@@ -15,3 +15,6 @@ export * from './utils';
 // Export validation
 export * from './validation';
 
+// Export auth (OAuth)
+export * from './auth';
+

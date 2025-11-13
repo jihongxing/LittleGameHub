@@ -31,7 +31,6 @@ export class RecommendationsController {
    * T144: GET /recommendations - Get personalized recommendations
    */
   @Get()
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async getRecommendations(
     @CurrentUser() user: any,
@@ -39,6 +38,23 @@ export class RecommendationsController {
     @Query('scenario') scenario?: RecommendationScenario,
     @Query('exclude') exclude?: string,
   ) {
+    if (!user) {
+      // Return scenario-based recommendations for unauthenticated users
+      const scenarioValue = (scenario || RecommendationScenario.ANY) as RecommendationScenario;
+      const recommendations = await this.scenarioService.getScenarioRecommendations(
+        scenarioValue,
+        {
+          limit: limit ? parseInt(String(limit)) : 10,
+          excludeGameIds: (exclude as string)?.split(',') || [],
+        },
+      );
+      const config = this.scenarioService.getScenarioConfig(scenarioValue);
+      return {
+        recommendations,
+        scenario: scenarioValue,
+      };
+    }
+
     const userId = user.id || user.sub;
 
     // Parse excluded game IDs

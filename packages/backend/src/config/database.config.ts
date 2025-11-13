@@ -38,6 +38,7 @@ import { SnakeCaseNamingStrategy } from './snake-case-naming.strategy';
 
 /**
  * TypeORM database configuration
+ * 注意：现在从 env.ts 读取配置（唯一的配置中心）
  */
 export const databaseConfig: DataSourceOptions = {
   type: 'postgres',
@@ -56,7 +57,7 @@ export const databaseConfig: DataSourceOptions = {
   migrationsTableName: 'migrations',
   
   // Logging
-  logging: env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  logging: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   logger: 'advanced-console',
   
   // Connection pool
@@ -68,7 +69,7 @@ export const databaseConfig: DataSourceOptions = {
   namingStrategy: new SnakeCaseNamingStrategy(),
   
   // Synchronize schema (only in development)
-  synchronize: env.NODE_ENV === 'development', // Automatically create tables in development
+  synchronize: process.env.NODE_ENV === 'development', // Automatically create tables in development
   
   // Drop schema on connection (NEVER in production)
   dropSchema: false,

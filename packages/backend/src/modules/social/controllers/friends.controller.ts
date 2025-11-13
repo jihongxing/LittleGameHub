@@ -20,7 +20,7 @@ import {
 } from '@nestjs/common';
 import { FriendService } from '../services/friend.service';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { FriendshipStatus } from '../entities/friend-relationship.entity';
 
 // DTOs

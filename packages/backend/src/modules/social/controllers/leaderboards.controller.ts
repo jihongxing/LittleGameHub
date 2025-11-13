@@ -11,9 +11,10 @@ import {
   Request,
   BadRequestException,
   ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import { LeaderboardService } from '../services/leaderboard.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 // DTOs
 export class GetLeaderboardQueryDto {
@@ -182,7 +183,3 @@ export class LeaderboardsController {
     };
   }
 }
-
-// Missing Param decorator import
-import { Param } from '@nestjs/common';
-

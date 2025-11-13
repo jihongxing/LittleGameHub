@@ -59,7 +59,7 @@ export const getRewards = async (options?: {
   if (options?.featured) params.append('featured', String(options.featured));
 
   const response = await apiClient.get(`/rewards?${params.toString()}`);
-  return response.data;
+  return response;
 };
 
 /**
@@ -67,7 +67,7 @@ export const getRewards = async (options?: {
  */
 export const getRewardById = async (rewardId: string): Promise<Reward> => {
   const response = await apiClient.get(`/rewards/${rewardId}`);
-  return response.data;
+  return response;
 };
 
 /**
@@ -104,5 +104,5 @@ export const getRedemptionHistory = async (options?: {
   if (options?.limit) params.append('limit', String(options.limit));
 
   const response = await apiClient.get(`/rewards/redemptions/history?${params.toString()}`);
-  return response.data;
+  return response;
 };

@@ -18,6 +18,8 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   BadRequestException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { GameService, GetGamesOptions } from '../services/game.service';
 import { GameSessionService, UpdateSessionData } from '../services/game-session.service';
@@ -25,6 +27,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { GameAvailabilityStatus } from '../entities/game.entity';
 import { GameSessionStatus } from '../entities/game-session.entity';
+import { ValidateNested, IsOptional, IsString, IsNumber, IsEnum, IsDate, Min, Max, IsIn } from 'class-validator'; // 添加class-validator导入用于DTO验证
 
 /**
  * DTOs for request validation 请求验证的数据传输对象
@@ -34,35 +37,92 @@ import { GameSessionStatus } from '../entities/game-session.entity';
  * Query parameters for game listing 游戏列表的查询参数
  */
 class GetGamesQueryDto {
+  @IsOptional()
+  @IsString()
   category?: string; // 游戏分类 / Game category
+
+  @IsOptional()
+  @IsString()
   search?: string; // 搜索关键词 / Search keyword
+
+  @IsOptional()
+  @IsEnum(GameAvailabilityStatus)
   status?: GameAvailabilityStatus; // 可用状态 / Availability status
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number; // 页码 / Page number
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   limit?: number; // 每页限制 / Items per page limit
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['popular', 'latest', 'rating'])
   sort?: 'popular' | 'latest' | 'rating'; // 排序方式 / Sort method
 }
 
 /**
  * Update session DTO 更新会话DTO
- * Data for updating a game session 更新游戏会话的数据
+ * Request body for updating a game session 请求体用于更新游戏会话
  */
 class UpdateSessionDto {
-  end_time?: string; // 结束时间 / End time
-  duration_seconds?: number; // 持续秒数 / Duration in seconds
+  @IsOptional()
+  @IsEnum(GameSessionStatus)
   completion_status?: GameSessionStatus; // 完成状态 / Completion status
+
+  @IsOptional()
   game_state?: Record<string, any>; // 游戏状态 / Game state
+
+  @IsOptional()
+  @IsDate()
+  end_time?: Date; // 结束时间 / End time
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  duration_seconds?: number; // 持续秒数 / Duration seconds
 }
 
-/**
- * Games Controller 游戏控制器
- * Handles HTTP requests for game-related operations 处理游戏相关操作的HTTP请求
- */
 @Controller('games')
 export class GamesController {
   constructor(
     private readonly gameService: GameService, // 游戏服务 / Game service
     private readonly gameSessionService: GameSessionService, // 游戏会话服务 / Game session service
   ) {}
+
+  /**
+   * T047: GET /games/featured/list - Get featured games
+   * T047: GET /games/featured/list - 获取推荐游戏
+   * @returns Featured games 推荐游戏列表
+   */
+  @Get('featured/list')
+  @HttpCode(HttpStatus.OK)
+  async getFeaturedGames() {
+    const games = await this.gameService.getFeaturedGames();
+    return {
+      games: games.map((game) => game.toJSON()), // 游戏列表，转换为JSON格式 / Game list, converted to JSON format
+    };
+  }
+
+  /**
+   * T047: GET /games/categories/:category - Get games by category
+   * T047: GET /games/categories/:category - 获取指定分类的游戏
+   * @param category Game category 游戏分类
+   * @returns Games by category 分类游戏列表
+   */
+  @Get('categories/:category')
+  @HttpCode(HttpStatus.OK)
+  async getGamesByCategory(@Param('category') category: string) {
+    const games = await this.gameService.getGamesByCategory(category);
+    return {
+      games: games.map((game) => game.toJSON()), // 游戏列表，转换为JSON格式 / Game list, converted to JSON format
+    };
+  }
 
   /**
    * T047: GET /games - Get game catalog with filtering and pagination
@@ -72,7 +132,7 @@ export class GamesController {
    */
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getGames(@Query() query: GetGamesQueryDto) {
+  async getGames(@Query() query: any) {
     const options: GetGamesOptions = {
       category: query.category, // 游戏分类 / Game category
       search: query.search, // 搜索关键词 / Search keyword
@@ -100,7 +160,6 @@ export class GamesController {
   }
 
   /**
-   * T048: GET /games/{gameId} - Get game details
    * T048: GET /games/{gameId} - 获取游戏详情
    * @param gameId Game UUID 游戏唯一标识
    * @returns Game details 游戏详情
@@ -182,42 +241,6 @@ export class GamesController {
     }
 
     return this.gameSessionService.updateSession(userId, gameId, sessionId, sessionUpdateData); // 更新会话 / Update session
-  }
-
-  /**
-   * Additional endpoint: Get featured games
-   * 附加端点：获取精选游戏
-   * @param limit Number of games to return 返回游戏数量
-   * @returns Array of featured games 精选游戏数组
-   */
-  @Get('featured/list')
-  @HttpCode(HttpStatus.OK)
-  async getFeaturedGames(@Query('limit') limit?: number) {
-    const parsedLimit = limit ? parseInt(String(limit)) : 10; // 解析限制数量，默认为10 / Parse limit, default 10
-    const games = await this.gameService.getFeaturedGames(parsedLimit);
-    return {
-      games: games.map((game) => game.toJSON()), // 游戏列表，转换为JSON格式 / Game list, converted to JSON format
-    };
-  }
-
-  /**
-   * Additional endpoint: Get games by category
-   * 附加端点：按分类获取游戏
-   * @param category Category name 分类名称
-   * @param limit Number of games to return 返回游戏数量
-   * @returns Array of games 游戏数组
-   */
-  @Get('categories/:category')
-  @HttpCode(HttpStatus.OK)
-  async getGamesByCategory(
-    @Param('category') category: string,
-    @Query('limit') limit?: number,
-  ) {
-    const parsedLimit = limit ? parseInt(String(limit)) : 20; // 解析限制数量，默认为20 / Parse limit, default 20
-    const games = await this.gameService.getGamesByCategory(category, parsedLimit);
-    return {
-      games: games.map((game) => game.toJSON()), // 游戏列表，转换为JSON格式 / Game list, converted to JSON format
-    };
   }
 
   /**

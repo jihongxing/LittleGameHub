@@ -53,19 +53,30 @@ const Recommendations: React.FC<RecommendationsProps> = ({
         exclude: excludeGameIds,
       });
 
+      // 验证数据结构
+      if (!data || !data.recommendations || !Array.isArray(data.recommendations)) {
+        console.error('Invalid recommendations data:', data);
+        setRecommendations([]);
+        return;
+      }
+
       setRecommendations(data.recommendations);
 
       // Fetch game details
-      const gamePromises = data.recommendations.map((rec) =>
-        getGameById(rec.game_id)
-      );
-      const gamesData = await Promise.all(gamePromises);
+      if (data.recommendations.length > 0) {
+        const gamePromises = data.recommendations.map((rec) =>
+          getGameById(rec.game_id)
+        );
+        const gamesData = await Promise.all(gamePromises);
 
-      const gamesMap = new Map<string, Game>();
-      gamesData.forEach((game) => {
-        gamesMap.set(game.id, game);
-      });
-      setGames(gamesMap);
+        const gamesMap = new Map<string, Game>();
+        gamesData.forEach((game) => {
+          if (game) {
+            gamesMap.set(game.id, game);
+          }
+        });
+        setGames(gamesMap);
+      }
     } catch (err: any) {
       console.error('Failed to fetch recommendations:', err);
       setError(err.message || '加载推荐失败');

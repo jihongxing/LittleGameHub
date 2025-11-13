@@ -19,7 +19,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { GameCollectionService } from '../services/collection.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 export class CreateCollectionDto {
   name: string;

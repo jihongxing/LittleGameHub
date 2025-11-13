@@ -35,10 +35,12 @@ const PointTransactionHistory: React.FC = () => {
         page,
         limit: pageSize,
       });
-      setTransactions(data.transactions);
-      setTotal(data.pagination.total);
+      setTransactions(data?.transactions || []);
+      setTotal(data?.pagination?.total || 0);
     } catch (err: any) {
       console.error('Failed to fetch transactions:', err);
+      setTransactions([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }

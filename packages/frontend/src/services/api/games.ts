@@ -230,3 +230,76 @@ export const getGameStatistics = async (gameId: string): Promise<{
   const response = await apiClient.get(`/games/${gameId}/statistics`);
   return response.data;
 };
+
+/**
+ * Get aggregated games with filtering
+ * @param options Query options including source and search
+ * @returns Paginated aggregated games
+ */
+export const gamesApi = {
+  getGames: async (options?: {
+    page?: number;
+    limit?: number;
+    source?: string;
+    search?: string;
+  }): Promise<{ data: Game[]; pagination: { page: number; limit: number; total: number; total_pages: number } }> => {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', String(options.page));
+    if (options?.limit) params.append('limit', String(options.limit));
+    if (options?.source) params.append('source', options.source);
+    if (options?.search) params.append('search', options.search);
+
+    const response = await apiClient.get<any>(`/games?${params.toString()}`);
+    return {
+      data: response.games || [],
+      pagination: response.pagination || { page: 1, limit: 12, total: 0, total_pages: 0 },
+    };
+  },
+
+  /**
+   * Get game by ID
+   */
+  getGameById: async (gameId: string): Promise<Game> => {
+    return await apiClient.get<Game>(`/games/${gameId}`);
+  },
+
+  /**
+   * Search games
+   */
+  searchGames: async (keyword: string): Promise<Game[]> => {
+    const response = await apiClient.get<any>(`/games/search/${keyword}`);
+    return response.games || [];
+  },
+
+  /**
+   * Get games by source
+   */
+  getGamesBySource: async (source: string): Promise<Game[]> => {
+    const response = await apiClient.get<any>(`/games/source/${source}`);
+    return response.games || [];
+  },
+
+  /**
+   * Manually trigger game synchronization
+   */
+  syncGames: async (): Promise<{ message: string }> => {
+    return await apiClient.post<{ message: string }>('/admin/sync-games', {});
+  },
+
+  /**
+   * Get aggregation statistics
+   */
+  getStats: async (): Promise<{
+    totalGames: number;
+    lastSyncTime: string;
+    sourceStats: {
+      rawg: number;
+      itch: number;
+      igdb: number;
+      wechat?: number;
+      douyin?: number;
+    };
+  }> => {
+    return await apiClient.get<any>('/games/stats/summary');
+  },
+};

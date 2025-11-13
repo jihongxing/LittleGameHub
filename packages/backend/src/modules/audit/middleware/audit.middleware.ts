@@ -9,7 +9,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { AuditLogService } from '../services/audit-log.service';
 import { AuditEventType, AuditSeverity, AuditStatus } from '../entities/audit-log.entity';
-import { logger } from '@/utils/logger';
+import { logger } from '../../../utils/logger';
 
 @Injectable()
 export class AuditMiddleware implements NestMiddleware {

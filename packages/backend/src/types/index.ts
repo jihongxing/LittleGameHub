@@ -13,7 +13,7 @@
  * @since 2024-01-01
  */
 
-import { Request } from 'express'
+// Express 导入已移除 - 项目现在只使用 NestJS
 
 /**
  * User Role Enumeration
@@ -179,11 +179,11 @@ export interface SearchFilters {
 }
 
 /**
- * Extended Request Interface with User
- * 带用户信息的扩展请求接口
+ * Extended Request Interface with User (NestJS)
+ * 带用户信息的扩展请求接口 (NestJS)
  */
-export interface AuthenticatedRequest extends Request {
-  user?: any  // 使用any类型避免与Sequelize模型冲突
+export interface AuthenticatedRequest {
+  user?: any  // NestJS 请求对象中的用户信息
 }
 
 /**

@@ -12,7 +12,7 @@ import {
   RecommendationType,
   RecommendationScenario,
 } from '../entities/recommendation.entity';
-import { Game } from '../../games/entities/game.entity';
+import { Game, GameAvailabilityStatus } from '../../games/entities/game.entity';
 import { GameSession } from '../../games/entities/game-session.entity';
 
 export interface RecommendationResult {
@@ -95,7 +95,7 @@ export class RecommendationService {
   ): Promise<RecommendationResult[]> {
     const games = await this.gameRepository
       .createQueryBuilder('game')
-      .where('game.availability_status = :status', { status: 'available' })
+      .where('game.availability_status = :status', { status: GameAvailabilityStatus.ACTIVE })
       .andWhere(excludeGameIds.length > 0 ? 'game.id NOT IN (:...excludeIds)' : '1=1', {
         excludeIds: excludeGameIds,
       })
@@ -141,7 +141,7 @@ export class RecommendationService {
     // Find games with similar categories
     const games = await this.gameRepository
       .createQueryBuilder('game')
-      .where('game.availability_status = :status', { status: 'available' })
+      .where('game.availability_status = :status', { status: GameAvailabilityStatus.ACTIVE })
       .andWhere(excludeGameIds.length > 0 ? 'game.id NOT IN (:...excludeIds)' : '1=1', {
         excludeIds: excludeGameIds,
       })
@@ -230,7 +230,7 @@ export class RecommendationService {
     // Find similar games
     const games = await this.gameRepository
       .createQueryBuilder('game')
-      .where('game.availability_status = :status', { status: 'available' })
+      .where('game.availability_status = :status', { status: GameAvailabilityStatus.ACTIVE })
       .andWhere(excludeGameIds.length > 0 ? 'game.id NOT IN (:...excludeIds)' : '1=1', {
         excludeIds: excludeGameIds,
       })
