@@ -3,13 +3,20 @@ import * as gameController from '@/controllers/gameController'
 import * as validation from '@/utils/validation'
 import { authenticate, authorize, requireAdmin, rateLimiter } from '@/middleware'
 import { uploadGameCover, uploadGameScreenshots } from '@/utils/fileUpload'
+import { validateBody, validateQuery } from '@/middleware/validation'
+import {
+  QueryGamesDto,
+  CreateGameDto,
+  UpdateGameDto,
+} from '@littlegamehub/shared'
 
 const router = Router()
 
-// 获取游戏列表（公开）
+// 获取游戏列表（公开）- 使用新的 DTO 验证
 router.get(
   '/',
   rateLimiter.generalLimiter,
+  validateQuery(QueryGamesDto),
   gameController.getGames
 )
 
@@ -20,23 +27,23 @@ router.get(
   gameController.getGameById
 )
 
-// 创建游戏（管理员）
+// 创建游戏（管理员）- 使用新的 DTO 验证
 router.post(
   '/',
   authenticate,
   requireAdmin,
   rateLimiter.strictLimiter,
-  validation.validateCreateGame,
+  validateBody(CreateGameDto),
   gameController.createGame
 )
 
-// 更新游戏（管理员）
+// 更新游戏（管理员）- 使用新的 DTO 验证
 router.put(
   '/:id',
   authenticate,
   requireAdmin,
   rateLimiter.strictLimiter,
-  validation.validateUpdateGame,
+  validateBody(UpdateGameDto),
   gameController.updateGame
 )
 

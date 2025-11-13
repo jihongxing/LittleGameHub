@@ -23,6 +23,7 @@
     "verify:mappings": "ts-node src/scripts/verify-field-mappings.ts"
   },
   "dependencies": {
+    "@littlegamehub/shared": "workspace:*",
     "@nestjs/common": "^10.4.20",
     "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.4.20",

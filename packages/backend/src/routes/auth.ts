@@ -2,22 +2,29 @@ import { Router } from 'express'
 import * as authController from '@/controllers/authController'
 import * as validation from '@/utils/validation'
 import { authenticate, rateLimiter } from '@/middleware'
+import { validateBody } from '@/middleware/validation'
+import {
+  RegisterDto,
+  LoginDto,
+  UpdateProfileDto,
+  ChangePasswordDto,
+} from '@littlegamehub/shared'
 
 const router = Router()
 
-// 用户注册
+// 用户注册 - 使用新的 DTO 验证
 router.post(
   '/register',
   rateLimiter.registerLimiter,
-  validation.validateUserRegistration,
+  validateBody(RegisterDto),
   authController.register
 )
 
-// 用户登录
+// 用户登录 - 使用新的 DTO 验证
 router.post(
   '/login',
   rateLimiter.loginLimiter,
-  validation.validateUserLogin,
+  validateBody(LoginDto),
   authController.login
 )
 
@@ -66,19 +73,19 @@ router.get(
   authController.getCurrentUser
 )
 
-// 更新当前用户信息
+// 更新当前用户信息 - 使用新的 DTO 验证
 router.put(
   '/me',
   authenticate,
-  validation.validateUpdateUser,
+  validateBody(UpdateProfileDto),
   authController.updateCurrentUser
 )
 
-// 更改密码
+// 更改密码 - 使用新的 DTO 验证
 router.put(
   '/change-password',
   authenticate,
-  validation.validateChangePassword,
+  validateBody(ChangePasswordDto),
   authController.changePassword
 )
 
