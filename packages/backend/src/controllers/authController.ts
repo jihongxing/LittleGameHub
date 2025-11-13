@@ -35,6 +35,8 @@ import { sendVerificationEmail, sendPasswordResetEmail } from '@/utils/email'
 import { catchAsync, AppError } from '@/middleware'
 import { tokenBlacklistService } from '@/services/security/token-blacklist.service'
 import { passwordStrengthService } from '@/services/security/password-strength.service'
+import { AuditLogService } from '@/modules/audit/services/audit-log.service'
+import { AuditEventType } from '@/modules/audit/entities/audit-log.entity'
 
 /**
  * User Registration
@@ -111,6 +113,28 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   })
   
   await userRepository.save(user)
+
+  // 记录用户注册审计事件
+  // Record user registration audit event
+  try {
+    const auditService = new (await import('@/modules/audit/services/audit-log.service')).AuditLogService(await import('@/config/database.config').then(m => m.AppDataSource));
+    await auditService.logUserAction(
+      user.id,
+      user.nickname || '',
+      AuditEventType.USER_REGISTER,
+      `用户 ${user.nickname} (${user.email}) 成功注册`,
+      {
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        resourceId: user.id,
+        resourceType: 'user',
+        metadata: { email: user.email }
+      }
+    );
+  } catch (auditError) {
+    // 审计日志失败不影响主要业务流程
+    console.warn('Failed to log user registration audit:', auditError);
+  }
 
   // 发送验证邮件
   try {
@@ -262,6 +286,29 @@ export const logout = catchAsync(async (req: Request, res: Response, next: NextF
     // Token will automatically expire based on its exp claim
     // 令牌会根据其 exp 声明自动过期
     await tokenBlacklistService.addToBlacklist(token)
+
+    // 记录用户登出审计事件
+    // Record user logout audit event
+    try {
+      const auditService = new (await import('@/modules/audit/services/audit-log.service')).AuditLogService(await import('@/config/database.config').then(m => m.AppDataSource));
+      const user = (req as any).user;
+      if (user) {
+        await auditService.logUserAction(
+          user.id,
+          user.nickname || '',
+          AuditEventType.USER_LOGOUT,
+          `用户 ${user.nickname} 成功登出`,
+          {
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent'),
+            metadata: { tokenInvalidated: true }
+          }
+        );
+      }
+    } catch (auditError) {
+      // 审计日志失败不影响主要业务流程
+      console.warn('Failed to log user logout audit:', auditError);
+    }
 
     res.status(200).json({
       status: 'success',

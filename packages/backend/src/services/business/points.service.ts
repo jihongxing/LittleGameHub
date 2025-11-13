@@ -16,6 +16,8 @@ import {
   HighConcurrency,
   type TransactionContext
 } from '@/services/database';
+import { AuditLogService } from '@/modules/audit/services/audit-log.service';
+import { AuditEventType } from '@/modules/audit/entities/audit-log.entity';
 
 export interface PointsTransaction {
   id: string;
@@ -100,6 +102,33 @@ export class PointsService {
             referenceId,
           });
 
+          // 记录积分获得审计事件
+          // Record points earned audit event
+          try {
+            const auditService = new (await import('@/modules/audit/services/audit-log.service')).AuditLogService(manager.connection);
+            await auditService.logUserAction(
+              userId,
+              user.nickname || '',
+              AuditEventType.POINTS_EARN,
+              `用户获得 ${amount} 积分：${description}`,
+              {
+                resourceId: referenceId || userId,
+                resourceType: 'points_transaction',
+                oldValues: { balance: user.point_balance },
+                newValues: { balance: newBalance },
+                metadata: {
+                  amount,
+                  description,
+                  referenceId,
+                  transactionType: 'earn'
+                }
+              }
+            );
+          } catch (auditError) {
+            // 审计日志失败不影响主要业务流程
+            logger.warn('Failed to log points earned audit:', auditError);
+          }
+
           return newBalance;
         },
         { ttl: 10 } // 10秒锁超时
@@ -161,6 +190,33 @@ export class PointsService {
             description,
             referenceId,
           });
+
+          // 记录积分消费审计事件
+          // Record points spent audit event
+          try {
+            const auditService = new (await import('@/modules/audit/services/audit-log.service')).AuditLogService(manager.connection);
+            await auditService.logUserAction(
+              userId,
+              user.nickname || '',
+              AuditEventType.POINTS_SPEND,
+              `用户消费 ${amount} 积分：${description}`,
+              {
+                resourceId: referenceId || userId,
+                resourceType: 'points_transaction',
+                oldValues: { balance: user.point_balance },
+                newValues: { balance: newBalance },
+                metadata: {
+                  amount,
+                  description,
+                  referenceId,
+                  transactionType: 'spend'
+                }
+              }
+            );
+          } catch (auditError) {
+            // 审计日志失败不影响主要业务流程
+            logger.warn('Failed to log points spent audit:', auditError);
+          }
 
           return newBalance;
         },

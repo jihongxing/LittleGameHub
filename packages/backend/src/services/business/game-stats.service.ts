@@ -16,6 +16,8 @@ import {
   HighConcurrency,
   type TransactionContext
 } from '@/services/database';
+import { AuditLogService } from '@/modules/audit/services/audit-log.service';
+import { AuditEventType } from '@/modules/audit/entities/audit-log.entity';
 
 export interface GameStatsUpdate {
   gameId: string;
@@ -67,6 +69,30 @@ export class GameStatsService {
             newCount: newPlayCount,
             increment,
           });
+
+          // 记录游戏播放审计事件
+          // Record game play audit event
+          try {
+            const auditService = new (await import('@/modules/audit/services/audit-log.service')).AuditLogService(manager.connection);
+            await auditService.logSystemEvent(
+              AuditEventType.GAME_PLAY,
+              `游戏《${game.title || gameId}》播放次数增加 ${increment}，总播放次数：${newPlayCount}`,
+              {
+                resourceId: gameId,
+                resourceType: 'game',
+                oldValues: { playCount: game.playCount },
+                newValues: { playCount: newPlayCount },
+                metadata: {
+                  increment,
+                  gameTitle: game.title,
+                  totalPlayCount: newPlayCount
+                }
+              }
+            );
+          } catch (auditError) {
+            // 审计日志失败不影响主要业务流程
+            logger.warn('Failed to log game play audit:', auditError);
+          }
 
           return newPlayCount;
         },
