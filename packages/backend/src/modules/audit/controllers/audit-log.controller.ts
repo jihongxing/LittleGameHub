@@ -70,7 +70,7 @@ export class AuditLogController {
         {
           status: 'error',
           message: '查询审计日志失败',
-          error: error.message,
+          error: (error as Error).message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );
@@ -147,7 +147,7 @@ export class AuditLogController {
         {
           status: 'error',
           message: '获取审计统计信息失败',
-          error: error.message,
+          error: (error as Error).message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );
@@ -184,7 +184,7 @@ export class AuditLogController {
         {
           status: 'error',
           message: '导出审计日志失败',
-          error: error.message,
+          error: (error as Error).message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );
@@ -232,7 +232,7 @@ export class AuditLogController {
         {
           status: 'error',
           message: '清理审计日志失败',
-          error: error.message,
+          error: (error as Error).message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR
       );

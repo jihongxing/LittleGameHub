@@ -9,14 +9,48 @@ import { AppError } from '@/middleware/errorHandler';
 
 export class FileUploadError extends AppError {
   public readonly uploadErrorCode: string;
+  private _metadata?: any;
 
-  constructor(message: string, errorCode: string, originalError?: any) {
-    super(message, 400, 'VALIDATION', originalError);
+  constructor(message: string, errorCode: string, originalError?: any, metadata?: any) {
+    super(message, 400, FileUploadError.getErrorType(errorCode), originalError);
     this.uploadErrorCode = errorCode;
+    this._metadata = metadata;
     this.name = 'FileUploadError';
 
     // 维护正确的堆栈跟踪
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  get metadata(): any {
+    return this._metadata;
+  }
+
+  private static getErrorType(errorCode: string): any {
+    // Map error codes to appropriate error types
+    const typeMap: Record<string, any> = {
+      'INVALID_MIME_TYPE': 'VALIDATION',
+      'INVALID_EXTENSION': 'VALIDATION',
+      'INVALID_CONTENT': 'VALIDATION',
+      'FILE_TOO_LARGE': 'VALIDATION',
+      'SECURITY_THREAT': 'VALIDATION',
+      'UNSAFE_FILENAME': 'VALIDATION',
+      'INVALID_PATH': 'VALIDATION',
+      'ACCESS_DENIED': 'AUTHORIZATION',
+      'QUOTA_EXCEEDED': 'VALIDATION',
+      'UPLOAD_FAILED': 'INTERNAL',
+      'PROCESSING_FAILED': 'INTERNAL',
+      'STORAGE_FAILED': 'INTERNAL',
+      'BATCH_UPLOAD_FAILED': 'VALIDATION',
+      'TOO_MANY_FILES': 'VALIDATION',
+      'FIELD_NAME_TOO_LONG': 'VALIDATION',
+      'FIELD_VALUE_TOO_LARGE': 'VALIDATION',
+      'TOO_MANY_FIELDS': 'VALIDATION',
+      'UNEXPECTED_FILE': 'VALIDATION',
+      'NO_FILE': 'VALIDATION',
+      'NO_FILES': 'VALIDATION',
+    };
+
+    return typeMap[errorCode] || 'VALIDATION';
   }
 
   /**

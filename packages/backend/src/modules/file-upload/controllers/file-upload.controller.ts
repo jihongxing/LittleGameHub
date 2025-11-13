@@ -24,11 +24,12 @@ import { SecureFileUploadService, UploadedFile } from '../services/secure-file-u
 import { FileUploadError } from '../errors/file-upload-error';
 import { FileUploadMiddleware } from '../middleware/file-upload.middleware';
 import { getUploadConfigByField } from '../config/file-upload-config';
-import { requireAuth } from '@/middleware';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { logger } from '@/utils/logger';
 
 @Controller('upload')
-@UseGuards(requireAuth)
+@UseGuards(JwtAuthGuard)
 export class FileUploadController {
   constructor(private readonly fileUploadService: SecureFileUploadService) {}
 

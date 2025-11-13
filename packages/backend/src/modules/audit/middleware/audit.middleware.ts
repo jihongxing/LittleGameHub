@@ -37,24 +37,25 @@ export class AuditMiddleware implements NestMiddleware {
     let responseBody: any = null;
 
     // 拦截响应结束
+    const self = this;
     res.end = function(chunk?: any, encoding?: BufferEncoding | (() => void)): Response {
       const executionTime = Date.now() - startTime;
       responseStatus = res.statusCode;
 
       // 异步记录审计日志（不阻塞响应）
       setImmediate(() => {
-        this.recordAuditLog(requestInfo, responseStatus, executionTime, req, res);
+        self.recordAuditLog(requestInfo, responseStatus, executionTime, req, res);
       });
 
       // 调用原始方法
-      return originalEnd.call(this, chunk, encoding);
-    }.bind(this);
+      return originalEnd.call(this, chunk, encoding as BufferEncoding);
+    };
 
     // 拦截JSON响应
     res.json = function(body?: any): Response {
       responseBody = body;
       return originalJson.call(this, body);
-    }.bind(this);
+    };
 
     // 拦截发送响应
     res.send = function(body?: any): Response {
@@ -62,7 +63,7 @@ export class AuditMiddleware implements NestMiddleware {
         responseBody = body;
       }
       return originalSend.call(this, body);
-    }.bind(this);
+    };
 
     next();
   }

@@ -45,7 +45,7 @@ export interface UploadedFile {
 export interface FileValidationResult {
   isValid: boolean;
   error?: string;
-  detectedMimeType?: string;
+  detectedMimeType?: string | null;
   securityThreat?: string;
 }
 

@@ -14,8 +14,9 @@ import routes from '@/routes'
 import { logger } from '@/utils'
 import { statusPage } from '@/controllers/healthController'
 
-// 加载环境变量
-dotenv.config()
+// 从根目录加载环境变量
+// Load environment variables from root directory
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 
 // 注册全局未捕获异常处理器（应该在所有代码之前）
 process.on('uncaughtException', handleUncaughtException)

@@ -16,6 +16,13 @@
  */
 
 import 'reflect-metadata'
+import * as dotenv from 'dotenv'
+import * as path from 'path'
+
+// Load environment variables from root directory FIRST
+// 首先从根目录加载环境变量
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
+
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { env } from './config/env'

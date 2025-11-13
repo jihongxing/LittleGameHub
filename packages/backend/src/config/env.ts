@@ -27,9 +27,11 @@
  */
 
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from root directory
+// 从根目录加载环境变量
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 /**
  * Environment configuration interface
