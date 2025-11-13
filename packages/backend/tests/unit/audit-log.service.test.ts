@@ -77,7 +77,7 @@ describe('AuditLogService', () => {
       createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
       getManyAndCount: jest.fn(),
       getCount: jest.fn(),
-    };
+    } as any;
 
     mockDataSource = {
       getRepository: jest.fn().mockReturnValue(mockRepository),
@@ -288,7 +288,22 @@ describe('AuditLogService', () => {
   describe('Log Querying', () => {
     it('should query logs with basic filters', async () => {
       const mockLogs = [mockAuditLog];
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 1]);
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 1]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.queryLogs({
         userId: 'user-123',
@@ -307,7 +322,22 @@ describe('AuditLogService', () => {
       const endDate = new Date('2024-12-31');
       const mockLogs = [mockAuditLog];
 
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 1]);
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 1]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.queryLogs({
         startDate,
@@ -321,7 +351,23 @@ describe('AuditLogService', () => {
 
     it('should query logs with severity filter', async () => {
       const mockLogs = [mockAuditLog];
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 1]);
+
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 1]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.queryLogs({
         severity: AuditSeverity.HIGH,
@@ -333,7 +379,22 @@ describe('AuditLogService', () => {
     });
 
     it('should handle query errors', async () => {
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockRejectedValue(new Error('Query failed'));
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockRejectedValue(new Error('Query failed')),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.queryLogs({}))
         .rejects
@@ -344,62 +405,74 @@ describe('AuditLogService', () => {
   describe('Statistics and Analytics', () => {
     it('should get audit statistics', async () => {
       // Mock event type breakdown
+      const eventTypeQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { eventType: 'USER_LOGIN', count: '10' },
+          { eventType: 'USER_LOGOUT', count: '8' },
+        ]),
+      };
+
+      const severityQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { severity: 'LOW', count: '15' },
+          { severity: 'MEDIUM', count: '3' },
+        ]),
+      };
+
+      const statusQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { status: 'SUCCESS', count: '16' },
+          { status: 'FAILURE', count: '2' },
+        ]),
+      };
+
+      const countQueryBuilder = {
+        count: jest.fn().mockResolvedValueOnce(5).mockResolvedValueOnce(15).mockResolvedValueOnce(50),
+      };
+
+      const topUsersQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        addGroupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { userId: 'user-1', username: 'user1', logCount: '5' },
+          { userId: 'user-2', username: 'user2', logCount: '3' },
+        ]),
+      };
+
+      const topIPsQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { ipAddress: '192.168.1.1', logCount: '8' },
+          { ipAddress: '192.168.1.2', logCount: '4' },
+        ]),
+      };
+
       mockAuditLogRepository.createQueryBuilder
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          groupBy: jest.fn().mockReturnThis(),
-          getRawMany: jest.fn().mockResolvedValue([
-            { eventType: 'USER_LOGIN', count: '10' },
-            { eventType: 'USER_LOGOUT', count: '8' },
-          ]),
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          groupBy: jest.fn().mockReturnThis(),
-          getRawMany: jest.fn().mockResolvedValue([
-            { severity: 'LOW', count: '15' },
-            { severity: 'MEDIUM', count: '3' },
-          ]),
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          groupBy: jest.fn().mockReturnThis(),
-          getRawMany: jest.fn().mockResolvedValue([
-            { status: 'SUCCESS', count: '16' },
-            { status: 'FAILURE', count: '2' },
-          ]),
-        } as any)
-        .mockReturnValueOnce({
-          count: jest.fn().mockResolvedValueOnce(5).mockResolvedValueOnce(15).mockResolvedValueOnce(50),
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          groupBy: jest.fn().mockReturnThis(),
-          addGroupBy: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          getRawMany: jest.fn().mockResolvedValue([
-            { userId: 'user-1', username: 'user1', logCount: '5' },
-            { userId: 'user-2', username: 'user2', logCount: '3' },
-          ]),
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          groupBy: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          getRawMany: jest.fn().mockResolvedValue([
-            { ipAddress: '192.168.1.1', logCount: '8' },
-            { ipAddress: '192.168.1.2', logCount: '4' },
-          ]),
-        } as any);
+        .mockReturnValueOnce(eventTypeQueryBuilder as any)
+        .mockReturnValueOnce(severityQueryBuilder as any)
+        .mockReturnValueOnce(statusQueryBuilder as any)
+        .mockReturnValueOnce(countQueryBuilder as any)
+        .mockReturnValueOnce(topUsersQueryBuilder as any)
+        .mockReturnValueOnce(topIPsQueryBuilder as any);
 
       (mockAuditLogRepository.getCount as jest.Mock).mockResolvedValue(18);
 
@@ -434,7 +507,7 @@ describe('AuditLogService', () => {
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
 
-      mockAuditLogRepository.createQueryBuilder.mockReturnValue({
+      const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
         addSelect: jest.fn().mockReturnThis(),
         groupBy: jest.fn().mockReturnThis(),
@@ -445,8 +518,9 @@ describe('AuditLogService', () => {
         orderBy: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         getCount: jest.fn().mockResolvedValue(5),
-      } as any);
+      };
 
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
       (mockAuditLogRepository.getCount as jest.Mock).mockResolvedValue(5);
 
       const stats = await service.getAuditStats(startDate, endDate);
@@ -468,7 +542,23 @@ describe('AuditLogService', () => {
   describe('Log Export', () => {
     it('should export logs as JSON', async () => {
       const mockLogs = [mockAuditLog];
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 1]);
+
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 1]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.exportLogs({ limit: 100 });
 
@@ -480,7 +570,23 @@ describe('AuditLogService', () => {
 
     it('should export logs as CSV', async () => {
       const mockLogs = [mockAuditLog];
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 1]);
+
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 1]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.exportLogs({ limit: 100 }, 'csv');
 
@@ -490,7 +596,23 @@ describe('AuditLogService', () => {
 
     it('should limit export to 10000 records', async () => {
       const mockLogs = Array(15000).fill(mockAuditLog);
-      (mockAuditLogRepository.getManyAndCount as jest.Mock).mockResolvedValue([mockLogs, 15000]);
+
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        offset: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockLogs, 15000]),
+        getRawMany: jest.fn(),
+        getCount: jest.fn(),
+        clone: jest.fn().mockReturnThis(),
+      };
+
+      mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await service.exportLogs({}, 'json');
 

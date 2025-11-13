@@ -70,7 +70,7 @@ describe('TransactionService', () => {
     it('should execute transaction successfully', async () => {
       const mockOperation = jest.fn().mockResolvedValue('success');
       const mockContext = {
-        manager: mockEntityManager,
+        manager: {},
         queryRunner: mockQueryRunner,
       };
 
@@ -142,31 +142,43 @@ describe('TransactionService', () => {
     it('should set READ_COMMITTED isolation level', async () => {
       const mockOperation = jest.fn().mockResolvedValue('success');
 
-      mockDataSource.createQueryRunner.mockReturnValue({
+      const mockQueryRunnerWithQuery = {
         ...mockQueryRunner,
         query: jest.fn().mockResolvedValue(undefined),
-      });
+      };
+
+      mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunnerWithQuery as any);
+      mockQueryRunnerWithQuery.connect.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.startTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.commitTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.release.mockResolvedValue(undefined);
 
       await service.executeInTransaction(mockOperation, {
         isolationLevel: 'READ_COMMITTED' as any,
       });
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET TRANSACTION ISOLATION LEVEL READ_COMMITTED');
+      expect(mockQueryRunnerWithQuery.query).toHaveBeenCalledWith('SET TRANSACTION ISOLATION LEVEL READ_COMMITTED');
     });
 
     it('should set SERIALIZABLE isolation level', async () => {
       const mockOperation = jest.fn().mockResolvedValue('success');
 
-      mockDataSource.createQueryRunner.mockReturnValue({
+      const mockQueryRunnerWithQuery = {
         ...mockQueryRunner,
         query: jest.fn().mockResolvedValue(undefined),
-      });
+      };
+
+      mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunnerWithQuery as any);
+      mockQueryRunnerWithQuery.connect.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.startTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.commitTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.release.mockResolvedValue(undefined);
 
       await service.executeInTransaction(mockOperation, {
         isolationLevel: 'SERIALIZABLE' as any,
       });
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+      expect(mockQueryRunnerWithQuery.query).toHaveBeenCalledWith('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
     });
 
     it('should use default isolation level when not specified', async () => {
@@ -184,16 +196,22 @@ describe('TransactionService', () => {
     it('should set transaction timeout', async () => {
       const mockOperation = jest.fn().mockResolvedValue('success');
 
-      mockDataSource.createQueryRunner.mockReturnValue({
+      const mockQueryRunnerWithQuery = {
         ...mockQueryRunner,
         query: jest.fn().mockResolvedValue(undefined),
-      });
+      };
+
+      mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunnerWithQuery as any);
+      mockQueryRunnerWithQuery.connect.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.startTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.commitTransaction.mockResolvedValue(undefined);
+      mockQueryRunnerWithQuery.release.mockResolvedValue(undefined);
 
       await service.executeInTransaction(mockOperation, {
         timeout: 30000, // 30 seconds
       });
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith('SET LOCAL statement_timeout = 30000');
+      expect(mockQueryRunnerWithQuery.query).toHaveBeenCalledWith('SET LOCAL statement_timeout = 30000');
     });
 
     it('should not set timeout when not specified', async () => {
@@ -214,10 +232,14 @@ describe('TransactionService', () => {
         .mockRejectedValueOnce(new Error('Deadlock found'))
         .mockResolvedValueOnce('success');
 
-      mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+      mockDataSource.createQueryRunner.mockReturnValueOnce(mockQueryRunner);
+      mockDataSource.createQueryRunner.mockReturnValueOnce(mockQueryRunner);
+      mockDataSource.createQueryRunner.mockReturnValueOnce(mockQueryRunner);
+
       mockQueryRunner.connect.mockResolvedValue(undefined);
       mockQueryRunner.startTransaction.mockResolvedValue(undefined);
       mockQueryRunner.commitTransaction.mockResolvedValue(undefined);
+      mockQueryRunner.rollbackTransaction.mockResolvedValue(undefined);
       mockQueryRunner.release.mockResolvedValue(undefined);
 
       const result = await service.executeInTransaction(mockOperation, {

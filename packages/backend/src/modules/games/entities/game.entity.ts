@@ -94,6 +94,32 @@ export class Game {
   @Column({ type: 'uuid', name: 'developer_id', nullable: true })
   developerId: string | null;
 
+  // ============================================
+  // 游戏聚合相关字段
+  // Game Aggregation Fields
+  // ============================================
+
+  @Column({ type: 'varchar', length: 50, name: 'source', nullable: true })
+  source: string | null; // 'rawg', 'itch', 'igdb', 'wechat', 'douyin'
+
+  @Column({ type: 'varchar', length: 100, name: 'source_id', nullable: true })
+  sourceId: string | null; // 原始平台的游戏ID / Original platform game ID
+
+  @Column({ type: 'varchar', length: 500, name: 'source_url', nullable: true })
+  sourceUrl: string | null; // 原始游戏的直接链接 / Direct link to original game
+
+  @Column({ type: 'jsonb', name: 'genres', default: [], nullable: true })
+  genres: string[] | null; // 游戏类型 / Game genres
+
+  @Column({ type: 'jsonb', name: 'platforms', default: [], nullable: true })
+  platforms: string[] | null; // 游戏平台 / Game platforms
+
+  @Column({ type: 'varchar', length: 100, name: 'release_date', nullable: true })
+  releaseDate: string | null; // 发布日期 / Release date
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, name: 'rating', nullable: true })
+  rating: number | null; // 游戏评分 / Game rating
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
