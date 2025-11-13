@@ -1,5 +1,5 @@
 {
-  "name": "gamehub-backend",
+  "name": "@littlegamehub/backend",
   "version": "1.0.0",
   "description": "GameHub后端API服务 - 游戏聚合平台",
   "main": "dist/index.js",

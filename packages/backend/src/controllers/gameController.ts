@@ -32,10 +32,10 @@ export const getGames = catchAsync(async (req: Request, res: Response, next: Nex
     data: {
       games: result.data,
       pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        total_pages: result.totalPages
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        total: result.pagination.total,
+        total_pages: result.pagination.totalPages
       }
     }
   })
@@ -387,7 +387,7 @@ export const getRecommendations = catchAsync(async (req: Request, res: Response,
     status: 'success',
     data: {
       games: result.data,
-      total: result.total
+      total: result.pagination.total
     }
   })
 })

@@ -1,0 +1,37 @@
+{
+  "name": "LittleGameHub",
+  "version": "1.0.0",
+  "description": "LittleGameHub - 小游戏聚合平台 Monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=@littlegamehub/backend",
+    "dev:frontend": "turbo run dev --filter=@littlegamehub/frontend",
+    "build": "turbo run build",
+    "build:backend": "turbo run build --filter=@littlegamehub/backend",
+    "build:frontend": "turbo run build --filter=@littlegamehub/frontend",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rimraf node_modules .turbo",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "keywords": [
+    "gamehub",
+    "monorepo",
+    "games"
+  ],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.22.0",
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "rimraf": "^5.0.10",
+    "turbo": "^2.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

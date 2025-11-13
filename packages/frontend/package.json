@@ -1,5 +1,5 @@
 {
-  "name": "gamehub-frontend",
+  "name": "@littlegamehub/frontend",
   "version": "1.0.0",
   "description": "GameHub前端应用 - 游戏聚合平台",
   "private": true,
