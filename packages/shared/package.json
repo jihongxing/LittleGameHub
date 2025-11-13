@@ -10,14 +10,25 @@
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["gamehub", "shared", "types"],
+  "keywords": [
+    "gamehub",
+    "shared",
+    "types"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
   },
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "@types/zxcvbn": "^4.4.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "isomorphic-dompurify": "^2.31.0",
+    "zxcvbn": "^4.4.2"
+  }
 }
