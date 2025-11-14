@@ -1,20 +1,21 @@
 {
-  "name": "LittleGameHub",
+  "name": "gamehub",
   "version": "1.0.0",
-  "description": "LittleGameHub - 小游戏聚合平台 Monorepo",
+  "description": "GameHub - 游戏聚合平台 Monorepo",
   "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "pnpm -r --parallel run dev",
     "dev:backend": "turbo run dev --filter=@littlegamehub/backend",
     "dev:frontend": "turbo run dev --filter=@littlegamehub/frontend",
-    "build": "turbo run build",
+    "build": "pnpm -r run build",
     "build:backend": "turbo run build --filter=@littlegamehub/backend",
     "build:frontend": "turbo run build --filter=@littlegamehub/frontend",
-    "lint": "turbo run lint",
+    "lint": "pnpm -r run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
-    "test": "turbo run test",
-    "clean": "turbo run clean && rimraf node_modules .turbo",
+    "test": "pnpm -r run test",
+    "clean": "pnpm -r run clean && rimraf node_modules .turbo",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "keywords": [
